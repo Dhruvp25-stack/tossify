@@ -125,6 +125,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
     <div class="msnav" onclick="goPage('bets',this)">🎯 Bets</div>
     <div class="msnav" onclick="goPage('matches',this)">🏏 Matches</div>
     <div class="msnav" onclick="goPage('tickets',this)">🎫 Support</div>
+    <div class="msnav" onclick="goPage('settings',this)">⚙️ Settings</div>
   </div>
   <div class="layout">
     <div class="sidebar" id="sidebar">
@@ -135,6 +136,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
       <div class="snav" onclick="goPage('bets',this)"><span class="si">🎯</span>Bets</div>
       <div class="snav" onclick="goPage('matches',this)"><span class="si">🏏</span>Matches</div>
       <div class="snav" onclick="goPage('tickets',this)"><span class="si">🎫</span>Support</div>
+      <div class="snav" onclick="goPage('settings',this)"><span class="si">⚙️</span>Settings</div>
     </div>
     <div class="content">
       <div class="pg active" id="pg-dashboard"></div>
@@ -144,6 +146,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
       <div class="pg" id="pg-bets"></div>
       <div class="pg" id="pg-matches"></div>
       <div class="pg" id="pg-tickets"></div>
+      <div class="pg" id="pg-settings"></div>
     </div>
   </div>
 </div>
@@ -152,7 +155,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 <script>
 const socket = io();
 let ATOKEN = sessionStorage.getItem('a_tok') || '';
-let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[] };
+let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[], depositAccount:{} };
 let currentPage = 'dashboard';
 let userQuery = '';
 
@@ -237,6 +240,7 @@ function renderPage(n){
   else if(n==='bets')         renderBets();
   else if(n==='matches')      renderMatches();
   else if(n==='tickets')      renderTickets();
+  else if(n==='settings')     renderSettings();
 }
 
 // ─── DASHBOARD ──────────────────────────────────────────────
@@ -286,6 +290,7 @@ function renderUsers(){
       <div class="tr-act">
         <button class="btn btn-green" onclick="addBal('${u.id}','${u.name}')">+ Add Balance</button>
         <button class="btn btn-red" onclick="dedBal('${u.id}','${u.name}')">− Deduct</button>
+        <button class="btn btn-blue" onclick="editUserBank('${u.id}','${u.name}')">🏦 Edit Bank</button>
         <button class="btn ${u.blocked?'btn-blue':'btn-red'}" onclick="toggleBlock('${u.id}')">${u.blocked?'Unblock':'Block'}</button>
       </div>
     </div>`).join(''):'<div class="empty">No users found</div>'}</div>`;
@@ -356,8 +361,32 @@ async function rejectWith(id){const r=await api('POST','/api/admin/withdrawal/re
 function renderBets(){
   const el=document.getElementById('pg-bets');
   const pend=DB.bets.filter(b=>b.status==='Pending').length;
+
+  // Group pending bets by match for bulk settle
+  const pendingBets = DB.bets.filter(b=>b.status==='Pending');
+  const matchGroups = {};
+  pendingBets.forEach(b=>{
+    if(!matchGroups[b.match]) matchGroups[b.match]=[];
+    matchGroups[b.match].push(b);
+  });
+  const matchGroupHTML = Object.keys(matchGroups).length ? `
+  <div class="add-form" style="margin-bottom:16px;">
+    <h3>⚡ Settle All Bets by Match</h3>
+    ${Object.entries(matchGroups).map(([match, bets])=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
+      <div style="font-weight:800;font-size:14px;color:#fff;margin-bottom:4px;">${match}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">${bets.length} pending bet${bets.length>1?'s':''} • Total: ₹${bets.reduce((s,b)=>s+b.amount,0).toFixed(2)}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-green" onclick="settleMatch('${match.replace(/'/g,"\\'")}','Won')">🏆 All WON</button>
+        <button class="btn btn-red" onclick="settleMatch('${match.replace(/'/g,"\\'")}','Lost')">❌ All LOST</button>
+        <button class="btn btn-gold" onclick="settleMatch('${match.replace(/'/g,"\\'")}','Void')">↩ All VOID</button>
+      </div>
+    </div>`).join('')}
+  </div>` : '';
+
   el.innerHTML=`<div class="pg-title">Bets (${DB.bets.length})</div>
   ${pend?`<div class="pending-badge">⚠️ ${pend} unsettled bet${pend>1?'s':''} — settle results below</div>`:''}
+  ${matchGroupHTML}
   <div class="tbl">${DB.bets.length?DB.bets.map(b=>`
     <div class="tr" id="bet-${b.id}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
@@ -385,6 +414,19 @@ async function settleBet(id, result){
     toast(`Bet settled: ${result} — user notified in real time!`,result==='Won'?'g':result==='Void'?'go':'r');
     await loadAll();
   } else toast(r.msg,'r');
+}
+
+async function settleMatch(match, result) {
+  const pendingForMatch = DB.bets.filter(b => b.match === match && b.status === 'Pending');
+  if (!pendingForMatch.length) { toast('No pending bets for this match', 'r'); return; }
+  if (!confirm(`Settle ALL ${pendingForMatch.length} bets for "${match}" as "${result}"? This will notify all users.`)) return;
+  let settled = 0;
+  for (const b of pendingForMatch) {
+    const r = await api('POST', '/api/admin/bet/settle', { id: b.id, result });
+    if (r.ok) settled++;
+  }
+  toast(`Settled ${settled} bets as ${result} for match!`, result==='Won'?'g':result==='Void'?'go':'r');
+  await loadAll();
 }
 
 // ─── MATCHES ────────────────────────────────────────────────
@@ -464,6 +506,54 @@ async function replyTicket(id){
 async function closeTicket(id){
   const r=await api('POST','/api/admin/ticket/close',{id});
   if(r.ok){toast('Ticket closed','r');await loadAll();}
+}
+
+// ─── USER BANK EDIT ─────────────────────────────────────────
+async function editUserBank(userId, userName) {
+  const user = DB.users.find(u => u.id === userId);
+  const cur = user?.bankDetails || {};
+  const holder = prompt(`Edit Account Holder Name for ${userName}:`, cur.holder || '');
+  if (holder === null) return;
+  const bank = prompt('Edit Bank Name:', cur.bank || '');
+  if (bank === null) return;
+  const acc = prompt('Edit Account Number:', cur.acc || '');
+  if (acc === null) return;
+  const ifsc = prompt('Edit IFSC Code:', cur.ifsc || '');
+  if (ifsc === null) return;
+  if (!holder || !bank || !acc || !ifsc) { toast('All fields required', 'r'); return; }
+  const r = await api('POST', '/api/admin/user/bank', { userId, holder, bank, acc, ifsc });
+  if (r.ok) { toast(`Bank details updated for ${userName}`, 'g'); await loadAll(); }
+  else toast(r.msg || 'Failed', 'r');
+}
+
+// ─── SETTINGS ───────────────────────────────────────────────
+function renderSettings() {
+  const el = document.getElementById('pg-settings');
+  const a = DB.depositAccount || {};
+  el.innerHTML = `<div class="pg-title">Settings</div>
+  <div class="add-form">
+    <h3>Edit Deposit Account (shown to all users on Deposit page)</h3>
+    <div class="frow">
+      <div class="field" style="margin:0"><label>Bank Name</label><input id="saBank" value="${a.bank||''}" placeholder="e.g. CANARA BANK"></div>
+      <div class="field" style="margin:0"><label>Account Number</label><input id="saAcc" value="${a.acc||''}" placeholder="Account number"></div>
+    </div>
+    <div class="frow" style="margin-top:9px;">
+      <div class="field" style="margin:0"><label>IFSC Code</label><input id="saIfsc" value="${a.ifsc||''}" placeholder="e.g. CNRB0017040"></div>
+      <div class="field" style="margin:0"><label>UPI ID</label><input id="saUpi" value="${a.upi||''}" placeholder="e.g. name@okicici"></div>
+    </div>
+    <button class="btn btn-green" style="margin-top:12px;" onclick="saveDepositAccount()">💾 SAVE DEPOSIT ACCOUNT</button>
+  </div>`;
+}
+
+async function saveDepositAccount() {
+  const bank = document.getElementById('saBank').value.trim();
+  const acc  = document.getElementById('saAcc').value.trim();
+  const ifsc = document.getElementById('saIfsc').value.trim();
+  const upi  = document.getElementById('saUpi').value.trim();
+  if (!bank || !acc || !ifsc || !upi) { toast('All fields required', 'r'); return; }
+  const r = await api('POST', '/api/admin/deposit-account', { bank, acc, ifsc, upi });
+  if (r.ok) { toast('Deposit account updated! Users will see changes immediately.', 'g'); await loadAll(); }
+  else toast(r.msg || 'Failed', 'r');
 }
 </script>
 </body>
