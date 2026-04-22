@@ -1,0 +1,39 @@
+name: Tossify Match Scraper
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright requests
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run scraper
+        env:
+          NODE_SERVER_URL: ${{ secrets.NODE_SERVER_URL }}
+          SCRAPER_SECRET: ${{ secrets.SCRAPER_SECRET }}
+        run: |
+          cd scraper
+          python scraper_once.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: live_matches
+          path: scraper/live_matches.json
+          retention-days: 1
