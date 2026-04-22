@@ -446,7 +446,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
   </div>
 
   <!-- BOTTOM NAV -->
-  <div class="bottom-nav">
+  <div class="bottom-nav" id="bottomNav" style="display:none;">
     <div class="nav-item active" id="nav-live" onclick="switchNav('live')"><span class="nav-icon">🏏</span><span class="nav-label">Live</span></div>
     <div class="nav-item" id="nav-wallet" onclick="switchNav('wallet')"><span class="nav-icon">💰</span><span class="nav-label">Wallet</span></div>
     <div class="nav-item" id="nav-profile" onclick="switchNav('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></div>
@@ -505,6 +505,9 @@ async function api(method, url, body) {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // Show bottom nav only when in app, hide on auth screen
+  const nav = document.getElementById('bottomNav');
+  if (nav) nav.style.display = id === 'appScreen' ? 'flex' : 'none';
 }
 
 // ── Auth ───────────────────────────────────────────────────
