@@ -11,8 +11,6 @@
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
-
-/* LOGIN */
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#0a2e14,var(--bg));}
 .lcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
 .lcard h2{font-size:28px;color:var(--green);margin-bottom:4px;}
@@ -33,8 +31,6 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 .btn-outline:hover{border-color:var(--green);color:var(--green);}
 .msg{font-size:13px;padding:9px;border-radius:8px;margin-top:10px;display:none;text-align:center;font-weight:700;}
 .msg.err{background:rgba(231,76,60,.12);color:var(--red);display:block;}
-
-/* LAYOUT */
 #mainScreen{display:none;}
 .header{background:var(--card);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;justify-content:space-between;align-items:center;}
 .header h2{font-size:20px;color:var(--green);}
@@ -52,15 +48,11 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 .content{flex:1;padding:16px;overflow-x:hidden;}
 .pg{display:none;}.pg.active{display:block;}
 .pg-title{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff;margin-bottom:14px;letter-spacing:1px;}
-
-/* STATS */
 .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:18px;}
 .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
 .sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:700;}
 .sv{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;}
 .sv.g{color:var(--green)}.sv.r{color:var(--red)}.sv.go{color:var(--gold)}.sv.b{color:var(--blue)}
-
-/* TABLE */
 .tbl{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
 .tr{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;}
 .tr:last-child{border-bottom:none;}
@@ -83,17 +75,37 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 .reply-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;margin-bottom:6px;}
 .reply-inp:focus{border-color:var(--green);}
 .sep{border:none;border-top:1px solid var(--border);margin:14px 0;}
-
-/* TOAST */
 .toast{position:fixed;top:18px;right:18px;background:var(--card2);color:var(--text);padding:11px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:all .3s;pointer-events:none;border:1px solid var(--border);transform:translateY(-8px);font-weight:700;}
 .toast.show{opacity:1;transform:translateY(0);}
 .toast.tg{border-color:var(--green);color:var(--green);}
 .toast.tr{border-color:var(--red);color:var(--red);}
 .toast.tgo{border-color:var(--gold);color:var(--gold);}
+/* Settle box */
+.settle-box{background:var(--card2);border:1.5px solid var(--gold);border-radius:10px;padding:14px;margin-bottom:12px;}
+.settle-box .sb-title{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--gold);margin-bottom:4px;}
+.settle-box .sb-sub{font-size:12px;color:var(--muted);margin-bottom:10px;}
+.settle-box .sb-teams{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.settle-box .team-btn{flex:1;min-width:120px;padding:10px 8px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;transition:all .2s;}
+.settle-box .team-btn:hover{border-color:var(--green);color:var(--green);}
+.settle-box .team-btn.selected{border-color:var(--green);background:rgba(46,204,64,.12);color:var(--green);}
+/* Screenshot modal */
+.ss-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;}
+.ss-modal.open{display:flex;}
+.ss-modal img{max-width:90vw;max-height:90vh;border-radius:10px;border:2px solid var(--border);}
+.ss-close{position:fixed;top:18px;right:18px;background:var(--red);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;}
+/* Match status badge */
+.status-open{background:rgba(46,204,64,.15);color:var(--green);border:1px solid rgba(46,204,64,.3);}
+.status-closed{background:rgba(240,192,64,.15);color:var(--gold);border:1px solid rgba(240,192,64,.3);}
+.status-settled{background:rgba(52,152,219,.15);color:var(--blue);border:1px solid rgba(52,152,219,.3);}
+.status-cancelled{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3);}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
+<div class="ss-modal" id="ssModal" onclick="closeSS()">
+  <button class="ss-close" onclick="closeSS()">✕</button>
+  <img id="ssImg" src="" alt="Payment Screenshot">
+</div>
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -116,7 +128,6 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
       <button class="btn btn-outline" onclick="doLogout()">Logout</button>
     </div>
   </div>
-  <!-- Mobile tabs -->
   <div class="mobile-tabs" id="mobileTabs">
     <div class="msnav active" onclick="goPage('dashboard',this)">📊 Dash</div>
     <div class="msnav" onclick="goPage('users',this)">👥 Users</div>
@@ -155,18 +166,27 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 <script>
 const socket = io();
 let ATOKEN = sessionStorage.getItem('a_tok') || '';
-let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[], depositAccount:{} };
+let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[], depositAccount:{}, settledMatches:{} };
 let currentPage = 'dashboard';
 let userQuery = '';
 
 function toast(msg, type='') {
   const t=document.getElementById('toast');
   t.textContent=msg; t.className='toast show'+(type?' t'+type:'');
-  setTimeout(()=>t.className='toast',2800);
+  setTimeout(()=>t.className='toast',3000);
 }
 async function api(method,url,body){
   const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-token':ATOKEN},body:body?JSON.stringify(body):undefined});
   return r.json();
+}
+
+// Screenshot modal
+function viewSS(src) {
+  document.getElementById('ssImg').src = src;
+  document.getElementById('ssModal').classList.add('open');
+}
+function closeSS() {
+  document.getElementById('ssModal').classList.remove('open');
 }
 
 async function doLogin(){
@@ -196,7 +216,6 @@ async function loadAll(){
   renderPage(currentPage);
 }
 
-// Auto login
 if(ATOKEN){
   api('GET','/api/admin/data').then(r=>{
     if(r.ok){
@@ -209,21 +228,18 @@ if(ATOKEN){
   });
 }
 
-// Real-time
 socket.on('db:bets',        d=>{DB.bets=d;       if(currentPage==='bets'||currentPage==='dashboard') renderPage(currentPage);});
 socket.on('db:deposits',    d=>{DB.deposits=d;    if(currentPage==='deposits'||currentPage==='dashboard') renderPage(currentPage);});
 socket.on('db:withdrawals', d=>{DB.withdrawals=d; if(currentPage==='withdrawals'||currentPage==='dashboard') renderPage(currentPage);});
 socket.on('db:tickets',     d=>{DB.tickets=d;     if(currentPage==='tickets'||currentPage==='dashboard') renderPage(currentPage);});
+socket.on('matches:update', d=>{DB.allMatches=d.matches; if(currentPage==='matches'||currentPage==='dashboard') renderPage(currentPage);});
 
 function goPage(name, el){
-  // Update sidebar + mobile nav
   document.querySelectorAll('.snav,.msnav').forEach(n=>n.classList.remove('active'));
-  // Mark clicked and its counterpart active
   el.classList.add('active');
-  // find matching in other nav
   document.querySelectorAll('.snav,.msnav').forEach(n=>{
-    const txt = n.textContent.replace(/[^a-zA-Z]/g,'').toLowerCase();
-    const target = name.toLowerCase();
+    const txt=n.textContent.replace(/[^a-zA-Z]/g,'').toLowerCase();
+    const target=name.toLowerCase();
     if(txt.includes(target)||target.includes(txt.slice(0,4))) n.classList.add('active');
   });
   currentPage=name;
@@ -233,22 +249,23 @@ function goPage(name, el){
 }
 
 function renderPage(n){
-  if(n==='dashboard')   renderDash();
-  else if(n==='users')        renderUsers();
-  else if(n==='deposits')     renderDeposits();
-  else if(n==='withdrawals')  renderWithdrawals();
-  else if(n==='bets')         renderBets();
-  else if(n==='matches')      renderMatches();
-  else if(n==='tickets')      renderTickets();
-  else if(n==='settings')     renderSettings();
+  if(n==='dashboard')        renderDash();
+  else if(n==='users')       renderUsers();
+  else if(n==='deposits')    renderDeposits();
+  else if(n==='withdrawals') renderWithdrawals();
+  else if(n==='bets')        renderBets();
+  else if(n==='matches')     renderMatches();
+  else if(n==='tickets')     renderTickets();
+  else if(n==='settings')    renderSettings();
 }
 
-// ─── DASHBOARD ──────────────────────────────────────────────
+// ─── DASHBOARD ───────────────────────────────────────────────
 function renderDash(){
   const el=document.getElementById('pg-dashboard');
   const totDep=DB.deposits.filter(d=>d.status==='Approved').reduce((s,d)=>s+d.amount,0);
   const totWith=DB.withdrawals.filter(w=>w.status==='Approved').reduce((s,w)=>s+w.amount,0);
   const pendBets=DB.bets.filter(b=>b.status==='Pending').length;
+  const unsettledMatches = (DB.allMatches||[]).filter(m=>!m.settled);
   el.innerHTML=`<div class="pg-title">Dashboard</div>
   <div class="stats">
     <div class="stat"><div class="sl">Total Users</div><div class="sv g">${DB.users.length}</div></div>
@@ -258,11 +275,11 @@ function renderDash(){
     <div class="stat"><div class="sl">Pending With</div><div class="sv go">${DB.withdrawals.filter(w=>w.status==='Pending').length}</div></div>
     <div class="stat"><div class="sl">Total Deposited</div><div class="sv g">₹${totDep.toFixed(0)}</div></div>
     <div class="stat"><div class="sl">Total Withdrawn</div><div class="sv r">₹${totWith.toFixed(0)}</div></div>
-    <div class="stat"><div class="sl">Live Matches</div><div class="sv g">${(DB.allMatches||[]).length}</div></div>
+    <div class="stat"><div class="sl">Active Matches</div><div class="sv g">${unsettledMatches.length}</div></div>
     <div class="stat"><div class="sl">Open Tickets</div><div class="sv go">${DB.tickets.filter(t=>t.status==='Open').length}</div></div>
   </div>
-  ${pendBets?`<div class="pending-badge">⚠️ ${pendBets} unsettled bet${pendBets>1?'s':''} awaiting result</div>`:''}
-  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">Recent Activity</div>
+  ${pendBets?`<div class="pending-badge">⚠️ ${pendBets} unsettled bet${pendBets>1?'s':''} — go to Matches to settle</div>`:''}
+  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">Recent Bets</div>
   <div class="tbl">${DB.bets.slice(0,8).map(b=>`
     <div class="tr">
       <div class="tr-name">${b.userName} — ₹${parseFloat(b.amount).toFixed(2)} on <span style="color:var(--green)">${b.team}</span></div>
@@ -271,7 +288,7 @@ function renderDash(){
     </div>`).join('')||'<div class="empty">No bets yet</div>'}</div>`;
 }
 
-// ─── USERS ──────────────────────────────────────────────────
+// ─── USERS ───────────────────────────────────────────────────
 function renderUsers(){
   const el=document.getElementById('pg-users');
   const q=userQuery.toLowerCase();
@@ -308,7 +325,7 @@ async function toggleBlock(id){
   if(r.ok){toast(r.blocked?'User blocked':'User unblocked',r.blocked?'r':'g');await loadAll();}
 }
 
-// ─── DEPOSITS ───────────────────────────────────────────────
+// ─── DEPOSITS ────────────────────────────────────────────────
 function renderDeposits(){
   const el=document.getElementById('pg-deposits');
   const pend=DB.deposits.filter(d=>d.status==='Pending').length;
@@ -321,7 +338,10 @@ function renderDeposits(){
           <div class="tr-name">${d.userName} — <strong style="color:var(--green)">₹${d.amount}</strong></div>
           <div class="tr-sub">UTR: <strong>${d.utr}</strong> • ${d.time}</div>
         </div>
-        <span class="chip ${d.status==='Approved'?'cg':d.status==='Rejected'?'cr':'cgo'}">${d.status}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <span class="chip ${d.status==='Approved'?'cg':d.status==='Rejected'?'cr':'cgo'}">${d.status}</span>
+          ${d.screenshot?`<button class="btn btn-blue" style="padding:4px 10px;font-size:11px;" onclick="viewSS('${d.screenshot.substring(0,30) === d.screenshot.substring(0,30) ? '' : ''}');viewSS(DB.deposits.find(x=>x.id==='${d.id}')?.screenshot)">📷 View SS</button>`:'<span style="font-size:11px;color:var(--muted)">No SS</span>'}
+        </div>
       </div>
       ${d.status==='Pending'?`<div class="tr-act">
         <button class="btn btn-green" onclick="approveDep('${d.id}')">✓ Approve</button>
@@ -332,7 +352,7 @@ function renderDeposits(){
 async function approveDep(id){const r=await api('POST','/api/admin/deposit/approve',{id});if(r.ok){toast('Deposit approved — balance updated!','g');await loadAll();}}
 async function rejectDep(id){const r=await api('POST','/api/admin/deposit/reject',{id});if(r.ok){toast('Deposit rejected','r');await loadAll();}}
 
-// ─── WITHDRAWALS ────────────────────────────────────────────
+// ─── WITHDRAWALS ─────────────────────────────────────────────
 function renderWithdrawals(){
   const el=document.getElementById('pg-withdrawals');
   const pend=DB.withdrawals.filter(w=>w.status==='Pending').length;
@@ -357,81 +377,92 @@ function renderWithdrawals(){
 async function approveWith(id){const r=await api('POST','/api/admin/withdrawal/approve',{id});if(r.ok){toast('Withdrawal approved!','g');await loadAll();}}
 async function rejectWith(id){const r=await api('POST','/api/admin/withdrawal/reject',{id});if(r.ok){toast('Withdrawal rejected — amount refunded','r');await loadAll();}}
 
-// ─── BETS ─── KEY: settle reflects to user in real time ──────
+// ─── BETS ─────────────────────────────────────────────────────
 function renderBets(){
   const el=document.getElementById('pg-bets');
   const pend=DB.bets.filter(b=>b.status==='Pending').length;
-
-  // Group pending bets by match for bulk settle
-  const pendingBets = DB.bets.filter(b=>b.status==='Pending');
-  const matchGroups = {};
-  pendingBets.forEach(b=>{
-    if(!matchGroups[b.match]) matchGroups[b.match]=[];
-    matchGroups[b.match].push(b);
-  });
-  const matchGroupHTML = Object.keys(matchGroups).length ? `
-  <div class="add-form" style="margin-bottom:16px;">
-    <h3>⚡ Settle All Bets by Match</h3>
-    ${Object.entries(matchGroups).map(([match, bets])=>`
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px;">
-      <div style="font-weight:800;font-size:14px;color:#fff;margin-bottom:4px;">${match}</div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">${bets.length} pending bet${bets.length>1?'s':''} • Total: ₹${bets.reduce((s,b)=>s+b.amount,0).toFixed(2)}</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-green" onclick="settleMatch('${match.replace(/'/g,"\\'")}','Won')">🏆 All WON</button>
-        <button class="btn btn-red" onclick="settleMatch('${match.replace(/'/g,"\\'")}','Lost')">❌ All LOST</button>
-        <button class="btn btn-gold" onclick="settleMatch('${match.replace(/'/g,"\\'")}','Void')">↩ All VOID</button>
-      </div>
-    </div>`).join('')}
-  </div>` : '';
-
-  el.innerHTML=`<div class="pg-title">Bets (${DB.bets.length})</div>
-  ${pend?`<div class="pending-badge">⚠️ ${pend} unsettled bet${pend>1?'s':''} — settle results below</div>`:''}
-  ${matchGroupHTML}
+  el.innerHTML=`<div class="pg-title">All Bets (${DB.bets.length})</div>
+  ${pend?`<div class="pending-badge">⚠️ ${pend} pending bets — settle via Matches tab</div>`:''}
   <div class="tbl">${DB.bets.length?DB.bets.map(b=>`
-    <div class="tr" id="bet-${b.id}">
+    <div class="tr">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div>
           <div class="tr-name">${b.userName} — ₹${parseFloat(b.amount).toFixed(2)}</div>
           <div class="tr-sub">${b.match}</div>
-          <div class="tr-sub">Pick: <strong style="color:var(--green)">${b.team}</strong> • Odds: 1.95 • Return: ₹${b.potential}</div>
+          <div class="tr-sub">Pick: <strong style="color:var(--green)">${b.team}</strong> • Return: ₹${b.potential}</div>
           <div class="tr-sub">${b.time}</div>
         </div>
-        <span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}" id="bc-${b.id}">${b.status}</span>
+        <span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}">${b.status}</span>
       </div>
-      ${b.status==='Pending'?`
-      <div class="tr-act">
-        <button class="btn btn-green" onclick="settleBet('${b.id}','Won')">🏆 WON</button>
-        <button class="btn btn-red" onclick="settleBet('${b.id}','Lost')">❌ LOST</button>
-        <button class="btn btn-gold" onclick="settleBet('${b.id}','Void')">↩ VOID</button>
-      </div>`:''}
     </div>`).join(''):'<div class="empty">No bets yet</div>'}</div>`;
 }
 
-async function settleBet(id, result){
-  if(!confirm(`Settle bet as "${result}"? This will immediately notify the user.`)) return;
-  const r=await api('POST','/api/admin/bet/settle',{id,result});
-  if(r.ok){
-    toast(`Bet settled: ${result} — user notified in real time!`,result==='Won'?'g':result==='Void'?'go':'r');
-    await loadAll();
-  } else toast(r.msg,'r');
+// ─── MATCHES ─── KEY: settle/cancel per match ────────────────
+function getMatchStatus(m) {
+  const settled = (DB.settledMatches||{})[m.id];
+  if (settled) return settled.action === 'cancel' ? 'cancelled' : 'settled';
+  if (!m.bettingOpen) return 'closed'; // time passed, not yet settled
+  return 'open';
 }
 
-async function settleMatch(match, result) {
-  const pendingForMatch = DB.bets.filter(b => b.match === match && b.status === 'Pending');
-  if (!pendingForMatch.length) { toast('No pending bets for this match', 'r'); return; }
-  if (!confirm(`Settle ALL ${pendingForMatch.length} bets for "${match}" as "${result}"? This will notify all users.`)) return;
-  let settled = 0;
-  for (const b of pendingForMatch) {
-    const r = await api('POST', '/api/admin/bet/settle', { id: b.id, result });
-    if (r.ok) settled++;
-  }
-  toast(`Settled ${settled} bets as ${result} for match!`, result==='Won'?'g':result==='Void'?'go':'r');
-  await loadAll();
-}
-
-// ─── MATCHES ────────────────────────────────────────────────
 function renderMatches(){
   const el=document.getElementById('pg-matches');
+  const allM = DB.allMatches || [];
+  const unsettled = allM.filter(m => !((DB.settledMatches||{})[m.id]));
+  const settled   = allM.filter(m =>  ((DB.settledMatches||{})[m.id]));
+
+  const matchCards = unsettled.map(m => {
+    const status = getMatchStatus(m);
+    const settled = (DB.settledMatches||{})[m.id];
+    const pendingBets = DB.bets.filter(b=>b.matchId===m.id && b.status==='Pending');
+    const matchLabel = `${m.teamA} vs ${m.teamB}`;
+    const mIdSafe = m.id.replace(/[^a-zA-Z0-9_]/g,'_');
+    const statusBadge =
+      status==='open'      ? `<span class="chip status-open">🟢 Betting Open</span>` :
+      status==='closed'    ? `<span class="chip status-closed">🔒 Betting Closed</span>` :
+      status==='settled'   ? `<span class="chip status-settled">✅ Settled</span>` :
+                             `<span class="chip status-cancelled">❌ Cancelled</span>`;
+
+    const settleSection = !settled ? `
+      <div class="settle-box">
+        <div class="sb-title">🏆 Settle or Cancel Match</div>
+        <div class="sb-sub">${pendingBets.length} pending bet${pendingBets.length!==1?'s':''} • Select winner and click Settle, or Cancel to void all bets</div>
+        <div class="sb-teams">
+          <button class="team-btn" id="tb_${mIdSafe}_a" onclick="selectWinner('${mIdSafe}','${m.teamA.replace(/'/g,"\\'")}')">🏏 ${m.teamA}</button>
+          <button class="team-btn" id="tb_${mIdSafe}_b" onclick="selectWinner('${mIdSafe}','${m.teamB.replace(/'/g,"\\'")}')">🏏 ${m.teamB}</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-green" onclick="settleMatchAdmin('${m.id}','${m.teamA.replace(/'/g,"\\'")}','${m.teamB.replace(/'/g,"\\'")}','${mIdSafe}')">✅ SETTLE BETS</button>
+          <button class="btn btn-red" onclick="cancelMatchAdmin('${m.id}','${matchLabel.replace(/'/g,"\\'")}')">❌ CANCEL (Refund All)</button>
+        </div>
+      </div>` : `<div style="font-size:12px;color:var(--muted);margin-top:6px;">Settled at ${(DB.settledMatches||{})[m.id]?.settledAt||''}</div>`;
+
+    return `<div class="tr">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+        <div>
+          <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
+          <div class="tr-sub">⏰ Toss/Close: ${m.time||'TBD'} • Source: ${m.source||'admin'} • ${pendingBets.length} pending bets</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          ${statusBadge}
+          ${m.source==='admin'?`<button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="deleteMatch('${m.id}')">🗑 Delete</button>`:''}
+        </div>
+      </div>
+      ${settleSection}
+    </div>`;
+  }).join('');
+
+  const settledCards = settled.length ? `
+    <div class="pg-title" style="font-size:16px;margin:14px 0 8px;">Settled / Cancelled Matches</div>
+    <div class="tbl">${settled.map(m=>{
+      const s=(DB.settledMatches||{})[m.id];
+      return `<div class="tr">
+        <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
+        <div class="tr-sub">⏰ ${m.time||'TBD'} • ${s?.action==='cancel'?'❌ Cancelled (all refunded)':`✅ Settled — Winner: <strong style="color:var(--green)">${s?.winnerTeam||''}</strong>`}</div>
+        <div class="tr-sub">Settled at: ${s?.settledAt||''}</div>
+      </div>`;
+    }).join('')}</div>` : '';
+
   el.innerHTML=`<div class="pg-title">Matches</div>
   <div class="add-form">
     <h3>Add New Match</h3>
@@ -439,40 +470,66 @@ function renderMatches(){
       <div class="field" style="margin:0"><label>Team A</label><input id="amA" placeholder="e.g. Mumbai Indians"></div>
       <div class="field" style="margin:0"><label>Team B</label><input id="amB" placeholder="e.g. Delhi Capitals"></div>
     </div>
-    <div class="field" style="margin-bottom:10px"><label>Toss Time</label><input id="amT" placeholder="e.g. 7:30 PM"></div>
+    <div class="field" style="margin-bottom:10px"><label>Toss / Bet Closing Time</label><input id="amT" placeholder="e.g. 7:30 PM or 22 Apr 07:30 PM"></div>
     <button class="btn btn-green" onclick="addMatch()">+ ADD MATCH</button>
   </div>
-  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">
-    Live Matches (${(DB.allMatches||[]).length} total — includes scraped)
-  </div>
-  <div class="tbl">${(DB.allMatches||[]).length?(DB.allMatches||[]).map(m=>`
-    <div class="tr">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-        <div>
-          <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
-          <div class="tr-sub">Toss: ${m.time||'TBD'} • Source: ${m.source||'admin'}</div>
-        </div>
-        <span class="chip ${m.active?'cg':'cr'}">${m.active?'Live':'Ended'}</span>
-      </div>
-      ${m.source==='admin'?`<div class="tr-act">
-        <button class="btn ${m.active?'btn-red':'btn-green'}" onclick="toggleMatch('${m.id}')">${m.active?'End':'Reactivate'}</button>
-        <button class="btn btn-outline" onclick="deleteMatch('${m.id}')">Delete</button>
-      </div>`:
-      '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Scraped match — managed automatically</div>'}
-    </div>`).join(''):'<div class="empty">No matches</div>'}</div>`;
+  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">Active Matches (${unsettled.length})</div>
+  <div class="tbl">${unsettled.length ? matchCards : '<div class="empty">No active matches</div>'}</div>
+  ${settledCards}`;
 }
+
+// Track selected winners per match
+const selectedWinners = {};
+function selectWinner(mIdSafe, team) {
+  selectedWinners[mIdSafe] = team;
+  // highlight selected button
+  const btns = document.querySelectorAll(`[id^="tb_${mIdSafe}_"]`);
+  btns.forEach(b => {
+    b.classList.toggle('selected', b.textContent.includes(team));
+  });
+}
+
+async function settleMatchAdmin(matchId, teamA, teamB, mIdSafe) {
+  const winner = selectedWinners[mIdSafe];
+  if (!winner) {
+    toast('Please select a winner first (click a team button)', 'r');
+    return;
+  }
+  const pendingCount = DB.bets.filter(b=>b.matchId===matchId && b.status==='Pending').length;
+  if (!confirm(`Settle ${pendingCount} bet(s) for this match?\n\n🏆 Winner: ${winner}\n\nAll users who backed "${winner}" will receive their winnings instantly.`)) return;
+  const r = await api('POST', '/api/admin/match/settle', { matchId, action: 'settle', winnerTeam: winner });
+  if (r.ok) {
+    toast(`✅ Match settled! ${r.settled} bets processed. Winnings sent!`, 'g');
+    delete selectedWinners[mIdSafe];
+    await loadAll();
+  } else toast(r.msg || 'Failed', 'r');
+}
+
+async function cancelMatchAdmin(matchId, matchLabel) {
+  const pendingCount = DB.bets.filter(b=>b.matchId===matchId && b.status==='Pending').length;
+  if (!confirm(`Cancel match: "${matchLabel}"?\n\nAll ${pendingCount} pending bets will be VOIDED and full bet amounts refunded to each user.`)) return;
+  const r = await api('POST', '/api/admin/match/settle', { matchId, action: 'cancel' });
+  if (r.ok) {
+    toast(`❌ Match cancelled. ${r.settled} bets refunded.`, 'go');
+    await loadAll();
+  } else toast(r.msg || 'Failed', 'r');
+}
+
 async function addMatch(){
   const a=document.getElementById('amA').value.trim();
   const b=document.getElementById('amB').value.trim();
   const t=document.getElementById('amT').value.trim();
   if(!a||!b){toast('Enter both team names','r');return;}
   const r=await api('POST','/api/admin/match/add',{teamA:a,teamB:b,time:t});
-  if(r.ok){toast('Match added — visible to all users now!','g');await loadAll();}
+  if(r.ok){toast('Match added!','g');await loadAll();}
 }
-async function toggleMatch(id){const r=await api('POST','/api/admin/match/toggle',{id});if(r.ok){toast('Match status updated','g');await loadAll();}}
-async function deleteMatch(id){if(!confirm('Delete this match?'))return;const r=await api('POST','/api/admin/match/delete',{id});if(r.ok){toast('Match deleted','r');await loadAll();}}
+async function deleteMatch(id){
+  if(!confirm('Delete this match?'))return;
+  const r=await api('POST','/api/admin/match/delete',{id});
+  if(r.ok){toast('Match deleted','r');await loadAll();}
+}
 
-// ─── TICKETS ────────────────────────────────────────────────
+// ─── TICKETS ─────────────────────────────────────────────────
 function renderTickets(){
   const el=document.getElementById('pg-tickets');
   const open=DB.tickets.filter(t=>t.status==='Open').length;
@@ -501,14 +558,14 @@ async function replyTicket(id){
   const reply=document.getElementById('tr-'+id)?.value?.trim();
   if(!reply){toast('Enter a reply','r');return;}
   const r=await api('POST','/api/admin/ticket/reply',{id,reply});
-  if(r.ok){toast('Reply sent to user!','g');await loadAll();}
+  if(r.ok){toast('Reply sent!','g');await loadAll();}
 }
 async function closeTicket(id){
   const r=await api('POST','/api/admin/ticket/close',{id});
   if(r.ok){toast('Ticket closed','r');await loadAll();}
 }
 
-// ─── USER BANK EDIT ─────────────────────────────────────────
+// ─── USER BANK EDIT ──────────────────────────────────────────
 async function editUserBank(userId, userName) {
   const user = DB.users.find(u => u.id === userId);
   const cur = user?.bankDetails || {};
@@ -526,13 +583,14 @@ async function editUserBank(userId, userName) {
   else toast(r.msg || 'Failed', 'r');
 }
 
-// ─── SETTINGS ───────────────────────────────────────────────
+// ─── SETTINGS ────────────────────────────────────────────────
 function renderSettings() {
   const el = document.getElementById('pg-settings');
   const a = DB.depositAccount || {};
   el.innerHTML = `<div class="pg-title">Settings</div>
   <div class="add-form">
-    <h3>Edit Deposit Account (shown to all users on Deposit page)</h3>
+    <h3>Edit Deposit Account</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Shown to all users on the Deposit page</p>
     <div class="frow">
       <div class="field" style="margin:0"><label>Bank Name</label><input id="saBank" value="${a.bank||''}" placeholder="e.g. CANARA BANK"></div>
       <div class="field" style="margin:0"><label>Account Number</label><input id="saAcc" value="${a.acc||''}" placeholder="Account number"></div>
@@ -541,19 +599,58 @@ function renderSettings() {
       <div class="field" style="margin:0"><label>IFSC Code</label><input id="saIfsc" value="${a.ifsc||''}" placeholder="e.g. CNRB0017040"></div>
       <div class="field" style="margin:0"><label>UPI ID</label><input id="saUpi" value="${a.upi||''}" placeholder="e.g. name@okicici"></div>
     </div>
-    <button class="btn btn-green" style="margin-top:12px;" onclick="saveDepositAccount()">💾 SAVE DEPOSIT ACCOUNT</button>
+    <hr class="sep">
+    <h3 style="margin-bottom:10px;">UPI QR Code</h3>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Upload a QR code image to show on the deposit page. Users can scan it to pay directly.</p>
+    ${a.qrImage?`<div style="margin-bottom:10px;"><img src="${a.qrImage}" style="max-width:160px;border-radius:8px;border:2px solid var(--gold);" alt="Current QR"><div style="font-size:11px;color:var(--green);margin-top:4px;">✓ QR code is set</div></div>`:'<div style="font-size:12px;color:var(--muted);margin-bottom:10px;">No QR code uploaded yet.</div>'}
+    <input type="file" id="qrFile" accept="image/*" style="display:none" onchange="previewQR(this)">
+    <div id="qrPreview" style="margin-bottom:10px;display:none;">
+      <img id="qrPreviewImg" style="max-width:160px;border-radius:8px;border:2px solid var(--border);" alt="New QR">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">New QR — save to apply</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <button class="btn btn-blue" onclick="document.getElementById('qrFile').click()">📁 Upload QR Image</button>
+      ${a.qrImage?`<button class="btn btn-red" onclick="removeQR()">🗑 Remove QR</button>`:''}
+    </div>
+    <button class="btn btn-green" onclick="saveDepositAccount()">💾 SAVE ALL SETTINGS</button>
   </div>`;
 }
 
+let newQrBase64 = null;
+function previewQR(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    newQrBase64 = e.target.result;
+    document.getElementById('qrPreviewImg').src = newQrBase64;
+    document.getElementById('qrPreview').style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+async function removeQR() {
+  if (!confirm('Remove QR code?')) return;
+  newQrBase64 = '';
+  const a = DB.depositAccount || {};
+  const r = await api('POST', '/api/admin/deposit-account', {
+    bank: a.bank, acc: a.acc, ifsc: a.ifsc, upi: a.upi, qrImage: null
+  });
+  if (r.ok) { toast('QR code removed', 'r'); newQrBase64 = null; await loadAll(); }
+}
 async function saveDepositAccount() {
   const bank = document.getElementById('saBank').value.trim();
   const acc  = document.getElementById('saAcc').value.trim();
   const ifsc = document.getElementById('saIfsc').value.trim();
   const upi  = document.getElementById('saUpi').value.trim();
-  if (!bank || !acc || !ifsc || !upi) { toast('All fields required', 'r'); return; }
-  const r = await api('POST', '/api/admin/deposit-account', { bank, acc, ifsc, upi });
-  if (r.ok) { toast('Deposit account updated! Users will see changes immediately.', 'g'); await loadAll(); }
-  else toast(r.msg || 'Failed', 'r');
+  if (!bank || !acc || !ifsc || !upi) { toast('All bank fields required', 'r'); return; }
+  const body = { bank, acc, ifsc, upi };
+  if (newQrBase64 !== null) body.qrImage = newQrBase64;
+  const r = await api('POST', '/api/admin/deposit-account', body);
+  if (r.ok) {
+    toast('Settings saved! Users see changes immediately.', 'g');
+    newQrBase64 = null;
+    await loadAll();
+  } else toast(r.msg || 'Failed', 'r');
 }
 </script>
 </body>
