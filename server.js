@@ -52,24 +52,19 @@ function saveDB() {
   try { fs.writeFileSync(DB_FILE, JSON.stringify(DB, null, 2)); } catch(e) {}
 }
 
-// Auto-create data folder and files if missing on first deploy
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-  fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
-}
-if (!fs.existsSync(DB_FILE)) {
-  fs.writeFileSync(DB_FILE, JSON.stringify({ users:[], bets:[], deposits:[], withdrawals:[], tickets:[], adminMatches:[] }, null, 2));
-}
-if (!fs.existsSync(MATCHES_FILE)) {
-  fs.writeFileSync(MATCHES_FILE, JSON.stringify({ updated_at:'', total_matches:0, matches:[] }, null, 2));
-}
-
 let DB = loadDB();
 
-// ─── Matches: merge JSON file + admin-added ───────────────────
+// ─── In-memory scraped matches (survives Render restarts via re-scrape) ──
+let inMemoryMatches = [];
+
+// ─── Matches: merge in-memory + file + admin-added ────────────────────
 function getLiveMatches() {
   let scraped = [];
   try {
-    if (fs.existsSync(MATCHES_FILE)) {
+    // First try in-memory (fastest, always fresh)
+    if (inMemoryMatches.length > 0) {
+      scraped = inMemoryMatches;
+    } else if (fs.existsSync(MATCHES_FILE)) {
       const raw = JSON.parse(fs.readFileSync(MATCHES_FILE, 'utf8'));
       scraped = (raw.matches || []).map(m => {
         const parts = m.match ? m.match.split(/\s+vs\s+/i) : ['Team A', 'Team B'];
@@ -503,9 +498,25 @@ app.post('/api/scraper/push', (req, res) => {
   const secret = req.headers['x-scraper-key'];
   if (secret !== 'my_new_scraper') return res.status(403).json({ ok: false });
   try {
-    fs.writeFileSync(MATCHES_FILE, JSON.stringify(req.body, null, 2));
+    // Store in memory (works even if filesystem is ephemeral on Render)
+    const rawMatches = req.body.matches || [];
+    inMemoryMatches = rawMatches.map(m => {
+      const parts = m.match ? m.match.split(/\s+vs\s+/i) : ['Team A', 'Team B'];
+      return {
+        id: 'sc_' + Buffer.from(m.match||'').toString('base64').slice(0,10),
+        teamA: parts[0]?.trim() || 'Team A',
+        teamB: parts[1]?.trim() || 'Team B',
+        logo1: m.logo1 || null,
+        logo2: m.logo2 || null,
+        time:  m.bet_closing_time || 'TBD',
+        source: 'scraped',
+        active: true
+      };
+    });
+    // Also try to write file as backup
+    try { fs.writeFileSync(MATCHES_FILE, JSON.stringify(req.body, null, 2)); } catch(e) {}
     io.emit('matches:update', { matches: getLiveMatches() });
-    res.json({ ok: true, count: (req.body.matches||[]).length });
+    res.json({ ok: true, count: inMemoryMatches.length });
   } catch(e) { res.json({ ok: false, msg: e.message }); }
 });
 
