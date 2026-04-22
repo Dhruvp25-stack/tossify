@@ -35,6 +35,19 @@ app.use(ADMIN_PATH, express.static(path.join(__dirname, 'admin')));
 const DB_FILE      = path.join(__dirname, 'data', 'db.json');
 const MATCHES_FILE = path.join(__dirname, 'data', 'live_matches.json');
 
+// ─── Admin deposit account (editable from admin panel) ────────
+const ADMIN_DEPOSIT_FILE = path.join(__dirname, 'data', 'deposit_account.json');
+function loadDepositAccount() {
+  try {
+    if (fs.existsSync(ADMIN_DEPOSIT_FILE)) return JSON.parse(fs.readFileSync(ADMIN_DEPOSIT_FILE, 'utf8'));
+  } catch(e) {}
+  return { bank:'CANARA BANK', acc:'110217291024', ifsc:'CNRB0017040', upi:'dhpatnu@okicici' };
+}
+function saveDepositAccount() {
+  try { fs.writeFileSync(ADMIN_DEPOSIT_FILE, JSON.stringify(depositAccount, null, 2)); } catch(e) {}
+}
+let depositAccount = loadDepositAccount();
+
 function loadDB() {
   try {
     if (fs.existsSync(DB_FILE)) return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
@@ -212,6 +225,9 @@ app.post('/api/bank', auth, demoBlock, (req, res) => {
 // Get live matches
 app.get('/api/matches', (req, res) => res.json({ ok: true, matches: getLiveMatches() }));
 
+// Get deposit account info (public)
+app.get('/api/deposit-account', (req, res) => res.json({ ok: true, account: depositAccount }));
+
 // Place bet
 app.post('/api/bet', auth, demoBlock, (req, res) => {
   const { matchId, team, amount } = req.body;
@@ -222,6 +238,30 @@ app.post('/api/bet', auth, demoBlock, (req, res) => {
   const allM = getLiveMatches();
   const match = allM.find(m => m.id === matchId && m.active);
   if (!match) return res.json({ ok: false, msg: 'Match not found or already ended' });
+
+  // ─── Bet closing time check ───────────────────────────────
+  if (match.time && match.time !== 'TBD') {
+    try {
+      // Parse time like "7:30 PM" or "19:30" or full datetime
+      const timeStr = match.time.trim();
+      const now = new Date();
+      // Try parsing as a time (HH:MM AM/PM or HH:MM)
+      const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+      if (timeMatch) {
+        let hours = parseInt(timeMatch[1]);
+        const mins = parseInt(timeMatch[2]);
+        const period = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
+        if (period === 'PM' && hours < 12) hours += 12;
+        if (period === 'AM' && hours === 12) hours = 0;
+        const closing = new Date(now);
+        closing.setHours(hours, mins, 0, 0);
+        if (now > closing) {
+          return res.json({ ok: false, msg: 'Bet closing time has passed. Bets are no longer accepted for this match.' });
+        }
+      }
+    } catch(e) { /* if parsing fails, allow bet */ }
+  }
+  // ─────────────────────────────────────────────────────────
 
   const bet = {
     id: genId('b'), userId: req.user.id, userName: req.user.name,
@@ -354,7 +394,8 @@ app.get('/api/admin/data', adminAuth, (req, res) => {
     bets: DB.bets,
     deposits: DB.deposits,
     withdrawals: DB.withdrawals,
-    tickets: DB.tickets
+    tickets: DB.tickets,
+    depositAccount: depositAccount
   });
 });
 
@@ -378,6 +419,29 @@ app.post('/api/admin/user/balance', adminAuth, (req, res) => {
   const tx = { id: genId('tx'), type: type === 'add' ? 'Admin Credit' : 'Admin Debit', amount: amt, status: 'Approved', time: new Date().toLocaleString('en-IN') };
   u.transactions.unshift(tx); saveDB();
   io.to(u.id).emit('balance:update', { balance: u.balance });
+  res.json({ ok: true });
+});
+
+// User – edit bank/withdrawal details (admin override)
+app.post('/api/admin/user/bank', adminAuth, (req, res) => {
+  const { userId, holder, bank, acc, ifsc } = req.body;
+  const u = findUser(userId);
+  if (!u) return res.json({ ok: false, msg: 'User not found' });
+  if (!holder || !bank || !acc || !ifsc) return res.json({ ok: false, msg: 'All bank fields required' });
+  u.bankDetails = { holder, bank, acc, ifsc };
+  u.bankSaved = true;
+  saveDB();
+  io.to(u.id).emit('bank:updated', { bankDetails: u.bankDetails });
+  res.json({ ok: true });
+});
+
+// Admin – edit own deposit account details
+app.post('/api/admin/deposit-account', adminAuth, (req, res) => {
+  const { bank, acc, ifsc, upi } = req.body;
+  if (!bank || !acc || !ifsc || !upi) return res.json({ ok: false, msg: 'All deposit account fields required' });
+  depositAccount = { bank, acc, ifsc, upi };
+  saveDepositAccount();
+  io.emit('deposit-account:updated', { account: depositAccount });
   res.json({ ok: true });
 });
 
