@@ -107,10 +107,10 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .match-time { font-size: 12px; color: var(--muted); font-weight: 700; }
 .teams-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
 .team-side { text-align: center; }
-.team-logo-wrap { width: 46px; height: 46px; border-radius: 50%; background: var(--card2); display: flex; align-items: center; justify-content: center; margin: 0 auto 7px; overflow: hidden; border: 1.5px solid var(--border); }
+.team-logo-wrap { width: 66px; height: 66px; border-radius: 50%; background: var(--card2); display: flex; align-items: center; justify-content: center; margin: 0 auto 9px; overflow: hidden; border: 2px solid var(--border); }
 .team-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
-.team-logo-wrap .emoji { font-size: 22px; }
-.team-name { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--white); letter-spacing: .5px; }
+.team-logo-wrap .emoji { font-size: 32px; }
+.team-name { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: var(--white); letter-spacing: .5px; }
 .vs-chip { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--muted); background: var(--card2); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); }
 .odds-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
 .odds-btn { background: rgba(46,204,64,.07); border: 1.5px solid rgba(46,204,64,.25); color: var(--green); border-radius: 10px; padding: 10px 8px; text-align: center; cursor: pointer; transition: all .2s; }
@@ -237,6 +237,10 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
     <img src="logo.png" alt="Tossify" onerror="this.style.display='none';document.getElementById('logoText').style.display='block'">
     <div id="logoText" style="display:none;font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--green);letter-spacing:3px;">TOSSIFY</div>
     <p>Toss Ki Betting, Smart Choice.</p>
+    <div style="display:flex;justify-content:center;gap:12px;margin-top:12px;">
+      <a href="https://www.instagram.com/officialtossify_?igsh=eTUwN2s5ZDVwYThk" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:800;">📸 Instagram</a>
+      <a href="https://t.me/Tossify_Official" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#0088cc;color:#fff;text-decoration:none;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:800;">✈️ Telegram</a>
+    </div>
   </div>
   <div class="auth-card">
     <div class="auth-tabs">
@@ -315,11 +319,11 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
       </div>
       <!-- DEPOSIT -->
       <div class="wtab-c active" id="wt-deposit">
-        <div class="info-box">
+        <div class="info-box" id="depositAccountInfo">
           <strong>Send Payment To:</strong><br>
-          🏦 Bank: CANARA BANK &nbsp;|&nbsp; A/C: <strong>110217291024</strong><br>
-          IFSC: <strong>CNRB0017040</strong><br>
-          📱 UPI ID: <strong>dhpatnu@okicici</strong><br><br>
+          🏦 Bank: <span id="daBank">...</span> &nbsp;|&nbsp; A/C: <strong id="daAcc">...</strong><br>
+          IFSC: <strong id="daIfsc">...</strong><br>
+          📱 UPI ID: <strong id="daUpi">...</strong><br><br>
           After payment, enter UTR and upload screenshot below.<br>
           <strong>Minimum Deposit: ₹300</strong>
         </div>
@@ -402,6 +406,14 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
   <!-- SUPPORT -->
   <div class="page" id="pageSupport">
     <div class="sec-title">Support</div>
+    <div style="display:flex;gap:10px;margin-bottom:16px;">
+      <a href="https://www.instagram.com/officialtossify_?igsh=eTUwN2s5ZDVwYThk" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;padding:12px;border-radius:10px;font-weight:800;font-size:13px;letter-spacing:.5px;">
+        <span style="font-size:20px;">📸</span> Instagram
+      </a>
+      <a href="https://t.me/Tossify_Official" target="_blank" style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;background:#0088cc;color:#fff;text-decoration:none;padding:12px;border-radius:10px;font-weight:800;font-size:13px;letter-spacing:.5px;">
+        <span style="font-size:20px;">✈️</span> Telegram
+      </a>
+    </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;">
       <div class="field">
         <label>Subject</label>
@@ -607,7 +619,7 @@ function renderMatches(matches) {
     <div class="match-card">
       <div class="match-head">
         <span class="live-pill"><span class="ldot"></span> LIVE</span>
-        <span class="match-time">⏰ ${m.time || 'TBD'}</span>
+        <span class="match-time">⏰ Bet Closing Time: ${m.time || 'TBD'}</span>
       </div>
       <div class="teams-row">
         <div class="team-side">
@@ -625,11 +637,11 @@ function renderMatches(matches) {
         </div>
       </div>
       <div class="odds-row">
-        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamA}','${m.teamA} vs ${m.teamB}')">
+        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamA}','${m.teamA} vs ${m.teamB}','${m.time||'TBD'}')">
           <span class="odds-lbl">${m.teamA}</span>
           <span class="odds-val">1.95</span>
         </div>
-        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamB}','${m.teamA} vs ${m.teamB}')">
+        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamB}','${m.teamA} vs ${m.teamB}','${m.time||'TBD'}')">
           <span class="odds-lbl">${m.teamB}</span>
           <span class="odds-val">1.95</span>
         </div>
@@ -638,8 +650,26 @@ function renderMatches(matches) {
 }
 
 // ── Bet ────────────────────────────────────────────────────
-function openBet(matchId, team, match) {
+function openBet(matchId, team, match, closingTime) {
   if (IS_DEMO) { toast('Register to place bets!', 'go'); return; }
+  // ─ Client-side closing time check ─
+  if (closingTime && closingTime !== 'TBD') {
+    const timeMatch = closingTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (timeMatch) {
+      let hours = parseInt(timeMatch[1]);
+      const mins = parseInt(timeMatch[2]);
+      const period = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
+      if (period === 'PM' && hours < 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      const now = new Date();
+      const closing = new Date(now);
+      closing.setHours(hours, mins, 0, 0);
+      if (now > closing) {
+        toast('Bet Closing Time has passed! No more bets for this match.', 'r');
+        return;
+      }
+    }
+  }
   betCtx = { matchId, team, match };
   document.getElementById('bm-match').textContent = match;
   document.getElementById('bm-team').textContent  = team;
@@ -896,6 +926,25 @@ socket.on('account:blocked', ({ blocked }) => {
 
 // ── Auto-refresh matches every 30 seconds ──────────────────
 setInterval(() => { if (USER) loadMatches(); }, 30000);
+
+// ── Load deposit account info ──────────────────────────────
+async function loadDepositAccount() {
+  const r = await fetch('/api/deposit-account');
+  const data = await r.json();
+  if (data.ok) updateDepositAccountUI(data.account);
+}
+function updateDepositAccountUI(a) {
+  const b = document.getElementById('daBank');
+  const ac = document.getElementById('daAcc');
+  const i = document.getElementById('daIfsc');
+  const u = document.getElementById('daUpi');
+  if (b) b.textContent = a.bank;
+  if (ac) ac.textContent = a.acc;
+  if (i) i.textContent = a.ifsc;
+  if (u) u.textContent = a.upi;
+}
+socket.on('deposit-account:updated', ({ account }) => updateDepositAccountUI(account));
+loadDepositAccount();
 
 // ── Boot ───────────────────────────────────────────────────
 tryAutoLogin();
