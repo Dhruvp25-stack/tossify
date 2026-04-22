@@ -514,10 +514,13 @@ function showScreen(id) {
 
 // ── Auth ───────────────────────────────────────────────────
 function switchAuth(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t, i) =>
-    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
-  document.getElementById('loginForm').classList.toggle('active', tab === 'login');
-  document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+  document.querySelectorAll('.auth-tab').forEach(function(t, i) {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  var lf = document.getElementById('loginForm');
+  var rf = document.getElementById('registerForm');
+  if (lf) { lf.style.display = tab === 'login' ? 'block' : 'none'; lf.classList.toggle('active', tab === 'login'); }
+  if (rf) { rf.style.display = tab === 'register' ? 'block' : 'none'; rf.classList.toggle('active', tab === 'register'); }
 }
 
 async function doRegister() {
@@ -526,22 +529,28 @@ async function doRegister() {
   const password = document.getElementById('rPass').value;
   const msg = document.getElementById('rMsg');
   if (!name || !username || !password) { msg.className = 'msg err'; msg.textContent = 'All fields required'; return; }
-  const r = await api('POST', '/api/register', { name, username, password });
-  if (r.ok) { msg.className = 'msg ok'; msg.textContent = 'Account created! Please login.'; setTimeout(() => switchAuth('login'), 1200); }
-  else { msg.className = 'msg err'; msg.textContent = r.msg; }
+  msg.className = 'msg'; msg.textContent = 'Creating account...';
+  try {
+    const r = await api('POST', '/api/register', { name, username, password });
+    if (r.ok) { msg.className = 'msg ok'; msg.textContent = 'Account created! Please login.'; setTimeout(() => switchAuth('login'), 1200); }
+    else { msg.className = 'msg err'; msg.textContent = r.msg || 'Registration failed. Try again.'; }
+  } catch(e) { msg.className = 'msg err'; msg.textContent = 'Server not reachable. Please try again.'; }
 }
 
 async function doLogin() {
   const username = document.getElementById('lUser').value.trim();
   const password = document.getElementById('lPass').value;
   const msg = document.getElementById('lMsg');
-  const r = await api('POST', '/api/login', { username, password });
-  if (r.ok) {
-    TOKEN = r.token; USER = r.user; IS_DEMO = r.isDemo;
-    localStorage.setItem('t_tok', TOKEN);
-    msg.className = 'msg ok'; msg.textContent = IS_DEMO ? 'Viewing as Demo...' : 'Welcome back!';
-    setTimeout(() => { showScreen('appScreen'); initApp(); }, 600);
-  } else { msg.className = 'msg err'; msg.textContent = r.msg; }
+  msg.className = 'msg'; msg.textContent = 'Logging in...';
+  try {
+    const r = await api('POST', '/api/login', { username, password });
+    if (r.ok) {
+      TOKEN = r.token; USER = r.user; IS_DEMO = r.isDemo;
+      localStorage.setItem('t_tok', TOKEN);
+      msg.className = 'msg ok'; msg.textContent = IS_DEMO ? 'Viewing as Demo...' : 'Welcome back!';
+      setTimeout(() => { showScreen('appScreen'); initApp(); }, 600);
+    } else { msg.className = 'msg err'; msg.textContent = r.msg || 'Invalid credentials.'; }
+  } catch(e) { msg.className = 'msg err'; msg.textContent = 'Server not reachable. Please check connection.'; }
 }
 
 async function doDemo() {
@@ -560,9 +569,11 @@ async function doLogout() {
 // ── Boot ───────────────────────────────────────────────────
 async function tryAutoLogin() {
   if (!TOKEN) return;
-  const r = await api('GET', '/api/me');
-  if (r.ok) { USER = r.user; IS_DEMO = !!USER.isDemo; showScreen('appScreen'); initApp(); }
-  else { TOKEN = ''; localStorage.removeItem('t_tok'); }
+  try {
+    const r = await api('GET', '/api/me');
+    if (r.ok) { USER = r.user; IS_DEMO = !!USER.isDemo; showScreen('appScreen'); initApp(); }
+    else { TOKEN = ''; localStorage.removeItem('t_tok'); }
+  } catch(e) { TOKEN = ''; localStorage.removeItem('t_tok'); }
 }
 
 // ── Init ───────────────────────────────────────────────────
