@@ -52,6 +52,17 @@ function saveDB() {
   try { fs.writeFileSync(DB_FILE, JSON.stringify(DB, null, 2)); } catch(e) {}
 }
 
+// Auto-create data folder and files if missing on first deploy
+if (!fs.existsSync(path.join(__dirname, 'data'))) {
+  fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+}
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify({ users:[], bets:[], deposits:[], withdrawals:[], tickets:[], adminMatches:[] }, null, 2));
+}
+if (!fs.existsSync(MATCHES_FILE)) {
+  fs.writeFileSync(MATCHES_FILE, JSON.stringify({ updated_at:'', total_matches:0, matches:[] }, null, 2));
+}
+
 let DB = loadDB();
 
 // ─── Matches: merge JSON file + admin-added ───────────────────
