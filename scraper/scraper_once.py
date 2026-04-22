@@ -13,8 +13,9 @@ OUTPUT_FILE    = "live_matches.json"
 USERNAME       = "6356469306"
 PASSWORD       = "Dhruvpatni@25"
 
+# These are read from GitHub Secrets — must match server.js exactly
 NODE_SERVER_URL = os.environ.get("NODE_SERVER_URL", "http://localhost:3000")
-SCRAPER_SECRET  = os.environ.get("SCRAPER_SECRET",  "tossify_scraper_secret_2025")
+SCRAPER_SECRET  = os.environ.get("SCRAPER_SECRET",  "my_new_scraper")
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 log = logging.getLogger(__name__)
