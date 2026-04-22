@@ -144,6 +144,10 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .wtab { flex: 1; padding: 10px; text-align: center; border-radius: 10px; border: 1.5px solid var(--border); cursor: pointer; font-size: 13px; font-weight: 800; color: var(--muted); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; transition: all .2s; }
 .wtab.active { border-color: var(--green); color: var(--green); background: rgba(46,204,64,.07); }
 .wtab-c { display: none; } .wtab-c.active { display: block; }
+.htabs { display: flex; gap: 5px; margin-bottom: 14px; }
+.htab { flex: 1; padding: 8px 4px; text-align: center; border-radius: 8px; border: 1.5px solid var(--border); cursor: pointer; font-size: 12px; font-weight: 800; color: var(--muted); transition: all .2s; }
+.htab.active { border-color: var(--gold); color: var(--gold); background: rgba(255,193,7,.07); }
+.htab-c { display: none; } .htab-c.active { display: block; }
 .info-box { background: var(--card2); border-radius: 10px; padding: 13px; margin-bottom: 12px; font-size: 13px; color: var(--muted); line-height: 1.7; border-left: 3px solid var(--green); }
 .info-box strong { color: var(--text); }
 .lock-wall { text-align: center; padding: 40px 20px; }
@@ -323,8 +327,12 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
           <strong>Send Payment To:</strong><br>
           🏦 Bank: <span id="daBank">...</span> &nbsp;|&nbsp; A/C: <strong id="daAcc">...</strong><br>
           IFSC: <strong id="daIfsc">...</strong><br>
-          📱 UPI ID: <strong id="daUpi">...</strong><br><br>
-          After payment, enter UTR and upload screenshot below.<br>
+          📱 UPI ID: <strong id="daUpi">...</strong><br>
+          <div id="daQrWrap" style="display:none;text-align:center;margin-top:10px;">
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Scan QR to Pay</div>
+            <img id="daQrImg" src="" alt="UPI QR Code" style="max-width:180px;border-radius:10px;border:2px solid var(--gold);">
+          </div>
+          <br>After payment, enter UTR and upload screenshot below.<br>
           <strong>Minimum Deposit: ₹300</strong>
         </div>
         <div class="field"><label>12-Digit UTR / Reference</label><input id="utrInput" placeholder="e.g. 123456789012" maxlength="12"></div>
@@ -348,7 +356,14 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
       </div>
       <!-- HISTORY -->
       <div class="wtab-c" id="wt-history">
-        <div id="txList"><div class="empty-state"><span class="ei">📋</span><p>No transactions yet</p></div></div>
+        <div class="htabs">
+          <div class="htab active" onclick="switchHTab('bets',this)">🎯 Bets</div>
+          <div class="htab" onclick="switchHTab('deposits',this)">💳 Deposits</div>
+          <div class="htab" onclick="switchHTab('withdrawals',this)">🏦 Withdrawals</div>
+        </div>
+        <div class="htab-c active" id="ht-bets"><div class="empty-state"><span class="ei">🎯</span><p>No bets yet</p></div></div>
+        <div class="htab-c" id="ht-deposits"><div class="empty-state"><span class="ei">💳</span><p>No deposits yet</p></div></div>
+        <div class="htab-c" id="ht-withdrawals"><div class="empty-state"><span class="ei">🏦</span><p>No withdrawals yet</p></div></div>
       </div>
     </div>
   </div>
@@ -552,7 +567,7 @@ function initApp() {
   document.getElementById('topBalWrap').style.display = IS_DEMO ? 'none' : 'block';
   renderUserHeader();
   loadMatches();
-  if (!IS_DEMO) { loadTransactions(); loadBets(); loadTickets(); loadWagerStatus(); }
+  if (!IS_DEMO) { loadTransactions(); loadBetHistory(); loadTickets(); loadWagerStatus(); }
   switchNav('live');
 }
 
@@ -599,7 +614,7 @@ function switchNav(page) {
     if (ni) ni.classList.toggle('active', p === page);
   });
   if (page === 'wallet') renderWallet();
-  if (page === 'profile') { renderUserHeader(); if (!IS_DEMO) loadBets(); }
+  if (page === 'profile') { renderUserHeader(); if (!IS_DEMO) loadBetHistory(); }
   if (page === 'support' && !IS_DEMO) loadTickets();
 }
 
@@ -615,38 +630,46 @@ function renderMatches(matches) {
     list.innerHTML = '<div class="empty-state"><span class="ei">🏏</span><p>No live matches at the moment</p></div>';
     return;
   }
-  list.innerHTML = matches.map(m => `
-    <div class="match-card">
+  list.innerHTML = matches.map(m => {
+    const isOpen = m.bettingOpen !== false;
+    const timeLabel = m.time && m.time !== 'TBD' ? m.time : 'TBD';
+    const statusBadge = isOpen
+      ? `<span class="live-pill"><span class="ldot"></span> LIVE</span>`
+      : `<span class="live-pill" style="background:rgba(231,76,60,.2);color:var(--red);border-color:var(--red);">🔒 CLOSED</span>`;
+    return `
+    <div class="match-card" style="${isOpen?'':'opacity:0.75;'}">
       <div class="match-head">
-        <span class="live-pill"><span class="ldot"></span> LIVE</span>
-        <span class="match-time">⏰ Bet Closing Time: ${m.time || 'TBD'}</span>
+        ${statusBadge}
+        <span class="match-time">⏰ ${timeLabel}</span>
       </div>
       <div class="teams-row">
         <div class="team-side">
           <div class="team-logo-wrap">
-            ${m.logo1 ? `<img src="${m.logo1}" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">` : '<span class="emoji">🏏</span>'}
+            ${m.logo1 ? \`<img src="\${m.logo1}" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">\` : '<span class="emoji">🏏</span>'}
           </div>
-          <div class="team-name">${m.teamA}</div>
+          <div class="team-name">\${m.teamA}</div>
         </div>
         <div class="vs-chip">VS</div>
         <div class="team-side">
           <div class="team-logo-wrap">
-            ${m.logo2 ? `<img src="${m.logo2}" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">` : '<span class="emoji">🏏</span>'}
+            \${m.logo2 ? \`<img src="\${m.logo2}" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">\` : '<span class="emoji">🏏</span>'}
           </div>
-          <div class="team-name">${m.teamB}</div>
+          <div class="team-name">\${m.teamB}</div>
         </div>
       </div>
+      \${isOpen ? \`
       <div class="odds-row">
-        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamA}','${m.teamA} vs ${m.teamB}','${m.time||'TBD'}')">
-          <span class="odds-lbl">${m.teamA}</span>
+        <div class="odds-btn" onclick="openBet('\${m.id}','\${m.teamA}','\${m.teamA} vs \${m.teamB}','\${m.time||'TBD'}')">
+          <span class="odds-lbl">\${m.teamA}</span>
           <span class="odds-val">1.95</span>
         </div>
-        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamB}','${m.teamA} vs ${m.teamB}','${m.time||'TBD'}')">
-          <span class="odds-lbl">${m.teamB}</span>
+        <div class="odds-btn" onclick="openBet('\${m.id}','\${m.teamB}','\${m.teamA} vs \${m.teamB}','\${m.time||'TBD'}')">
+          <span class="odds-lbl">\${m.teamB}</span>
           <span class="odds-val">1.95</span>
         </div>
-      </div>
-    </div>`).join('');
+      </div>\` : '<div style="text-align:center;padding:10px 0;font-size:13px;color:var(--muted);">🔒 Betting is closed for this match</div>'}
+    </div>`;
+  }).join('');
 }
 
 // ── Bet ────────────────────────────────────────────────────
@@ -692,7 +715,7 @@ async function confirmBet() {
     document.getElementById('topBal').textContent = r.balance.toFixed(2);
     closeBet();
     toast(`Bet placed! ₹${amount} on ${betCtx.team}`, 'g');
-    loadBets();
+    loadBetHistory();
   } else toast(r.msg, 'r');
 }
 
@@ -754,7 +777,15 @@ async function submitDeposit() {
   const amt = parseFloat(document.getElementById('depAmt').value) || 0;
   if (!utr || utr.length < 10) { toast('Enter valid UTR (min 10 digits)', 'r'); return; }
   if (amt < 300) { toast('Minimum deposit is ₹300', 'r'); return; }
-  const r = await api('POST', '/api/deposit', { utr, amount: amt });
+  if (!uploadedFile) { toast('Please upload your payment screenshot', 'r'); return; }
+  // Convert screenshot to base64
+  const screenshot = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(uploadedFile);
+  });
+  const r = await api('POST', '/api/deposit', { utr, amount: amt, screenshot });
   if (r.ok) {
     toast('Deposit request submitted! ✓', 'g');
     document.getElementById('utrInput').value = '';
@@ -778,28 +809,82 @@ async function submitWithdraw() {
   } else toast(r.msg, 'r');
 }
 
+// History sub-tab switcher
+function switchHTab(tab, el) {
+  document.querySelectorAll('.htab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.htab-c').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+  const pane = document.getElementById('ht-' + tab);
+  if (pane) pane.classList.add('active');
+  if (tab === 'bets') loadBetHistory();
+  else if (tab === 'deposits') loadDepositHistory();
+  else if (tab === 'withdrawals') loadWithdrawalHistory();
+}
+
 async function loadTransactions() {
   if (IS_DEMO) return;
-  const r = await api('GET', '/api/transactions');
+  loadBetHistory();
+  loadDepositHistory();
+  loadWithdrawalHistory();
+}
+
+async function loadBetHistory() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/bets');
   if (!r.ok) return;
-  const list = document.getElementById('txList');
-  if (!r.transactions.length) {
-    list.innerHTML = '<div class="empty-state"><span class="ei">📋</span><p>No transactions yet</p></div>';
-    return;
-  }
-  list.innerHTML = r.transactions.map(t => `
+  const list = document.getElementById('ht-bets');
+  if (!list) return;
+  if (!r.bets.length) { list.innerHTML = '<div class="empty-state"><span class="ei">🎯</span><p>No bets yet</p></div>'; return; }
+  list.innerHTML = r.bets.map(b => `
     <div class="tx-card">
-      <div class="tx-left">
-        <div class="tl-type">${t.type}</div>
-        <div class="tl-time">${t.time}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text)">${b.match}</div>
+      <div style="font-size:12px;color:var(--muted);margin:2px 0">🎯 Backed: <strong>${b.team}</strong> &nbsp;•&nbsp; ${b.time}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+        <div>
+          <span style="font-size:13px;color:var(--gold)">₹${parseFloat(b.amount).toFixed(2)}</span>
+          <span style="font-size:11px;color:var(--muted)"> → Potential ₹${b.potential}</span>
+        </div>
+        <span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}">${b.status}</span>
       </div>
-      <div class="tx-right">
-        <div class="tr-amt" style="color:${['Deposit','Admin Credit'].includes(t.type)?'var(--green)':'var(--red)'}">
-          ${['Deposit','Admin Credit'].includes(t.type)?'+':'-'}₹${t.amount.toFixed(2)}
+    </div>`).join('');
+}
+
+async function loadDepositHistory() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/deposit-history');
+  if (!r.ok) return;
+  const list = document.getElementById('ht-deposits');
+  if (!list) return;
+  if (!r.deposits.length) { list.innerHTML = '<div class="empty-state"><span class="ei">💳</span><p>No deposits yet</p></div>'; return; }
+  list.innerHTML = r.deposits.map(d => `
+    <div class="tx-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--green)">+₹${parseFloat(d.amount).toFixed(2)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">UTR: <strong>${d.utr}</strong></div>
+          <div style="font-size:11px;color:var(--muted)">${d.time}</div>
         </div>
-        <div style="text-align:right;margin-top:3px;">
-          <span class="chip ${t.status==='Approved'?'cg':t.status==='Rejected'?'cr':'cgo'}">${t.status}</span>
+        <span class="chip ${d.status==='Approved'?'cg':d.status==='Rejected'?'cr':'cgo'}">${d.status}</span>
+      </div>
+    </div>`).join('');
+}
+
+async function loadWithdrawalHistory() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/withdrawal-history');
+  if (!r.ok) return;
+  const list = document.getElementById('ht-withdrawals');
+  if (!list) return;
+  if (!r.withdrawals.length) { list.innerHTML = '<div class="empty-state"><span class="ei">🏦</span><p>No withdrawals yet</p></div>'; return; }
+  list.innerHTML = r.withdrawals.map(w => `
+    <div class="tx-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--red)">-₹${parseFloat(w.amount).toFixed(2)}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${w.bank?`${w.bank.holder} • ${w.bank.bank}`:''}</div>
+          <div style="font-size:11px;color:var(--muted)">${w.time}</div>
         </div>
+        <span class="chip ${w.status==='Approved'?'cg':w.status==='Rejected'?'cr':'cgo'}">${w.status}</span>
       </div>
     </div>`).join('');
 }
@@ -826,25 +911,7 @@ async function saveBankDetails() {
   else toast(r.msg, 'r');
 }
 
-async function loadBets() {
-  if (IS_DEMO) return;
-  const r = await api('GET', '/api/bets');
-  if (!r.ok) return;
-  const list = document.getElementById('myBets');
-  if (!r.bets.length) { list.innerHTML = '<div class="empty-state"><span class="ei">🎯</span><p>No bets yet</p></div>'; return; }
-  list.innerHTML = r.bets.slice(0, 20).map(b => `
-    <div class="bet-card">
-      <div class="bc-top">
-        <div class="bc-match">${b.match}</div>
-        <div class="bc-amt">₹${parseFloat(b.amount).toFixed(2)}</div>
-      </div>
-      <div class="bc-bot">
-        <span class="bc-team">🎯 ${b.team}</span>
-        <span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}">${b.status}</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${b.time} • Potential: ₹${b.potential}</div>
-    </div>`).join('');
-}
+// loadBets replaced by loadBetHistory in history tabs
 
 // ── Support ────────────────────────────────────────────────
 async function submitTicket() {
@@ -902,7 +969,7 @@ socket.on('bets:settled', ({ betId, result, balance }) => {
   if (!USER) return;
   USER.balance = balance;
   document.getElementById('topBal').textContent = balance.toFixed(2);
-  loadBets();
+  loadBetHistory();
   const emoji = result === 'Won' ? '🎉' : result === 'Void' ? '↩️' : '😔';
   const title = result === 'Won' ? 'YOU WON!' : result === 'Void' ? 'BET VOIDED' : 'BET LOST';
   const body  = result === 'Won' ? `Winnings credited! New balance: ₹${balance.toFixed(2)}`
@@ -910,8 +977,14 @@ socket.on('bets:settled', ({ betId, result, balance }) => {
     : `Better luck next time! Balance: ₹${balance.toFixed(2)}`;
   showResult(emoji, title, body);
 });
-socket.on('match:result', ({ match, team, result }) => {
-  if (IS_DEMO) toast(`Result: ${match} – ${result}`, 'go');
+socket.on('match:result', ({ match, action, winnerTeam, settledCount }) => {
+  if (action === 'cancel') {
+    toast('Match cancelled — your bets have been refunded!', 'go');
+  } else {
+    toast(\`Match result out! \${winnerTeam || ''} won. Check your Bet History.\`, 'g');
+  }
+  loadMatches();
+  loadBetHistory();
 });
 socket.on('tx:update', ({ transactions }) => {
   if (USER) { USER.transactions = transactions; loadTransactions(); }
@@ -942,6 +1015,12 @@ function updateDepositAccountUI(a) {
   if (ac) ac.textContent = a.acc;
   if (i) i.textContent = a.ifsc;
   if (u) u.textContent = a.upi;
+  const qrWrap = document.getElementById('daQrWrap');
+  const qrImg  = document.getElementById('daQrImg');
+  if (qrWrap && qrImg) {
+    if (a.qrImage) { qrImg.src = a.qrImage; qrWrap.style.display = 'block'; }
+    else qrWrap.style.display = 'none';
+  }
 }
 socket.on('deposit-account:updated', ({ account }) => updateDepositAccountUI(account));
 loadDepositAccount();
