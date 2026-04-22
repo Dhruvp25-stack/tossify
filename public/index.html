@@ -641,45 +641,49 @@ async function loadMatches() {
 }
 
 function renderMatches(matches) {
-  var list = document.getElementById('matchList');
+  var list = document.getElementById("matchList");
   if (!matches || !matches.length) {
-    list.innerHTML = '<div class="empty-state"><span class="ei">🏏</span><p>No live matches at the moment</p></div>';
+    list.innerHTML = "<div class=\"empty-state\"><span class=\"ei\">🏏</span><p>No live matches at the moment</p></div>";
     return;
   }
   list.innerHTML = matches.map(function(m) {
     var isOpen = m.bettingOpen !== false;
-    var timeLabel = m.time && m.time !== 'TBD' ? m.time : 'TBD';
+    var timeLabel = m.time && m.time !== "TBD" ? m.time : "TBD";
     var statusBadge = isOpen
-      ? '<span class="live-pill"><span class="ldot"></span> LIVE</span>'
-      : '<span class="live-pill" style="background:rgba(231,76,60,.2);color:var(--red);border-color:var(--red);">🔒 CLOSED</span>';
+      ? "<span class=\"live-pill\"><span class=\"ldot\"></span> LIVE</span>"
+      : "<span class=\"live-pill\" style=\"background:rgba(231,76,60,.2);color:var(--red);border-color:var(--red);\">🔒 CLOSED</span>";
     var logo1Html = m.logo1
-      ? '<img src="' + m.logo1 + '" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">'
-      : '<span class="emoji">🏏</span>';
+      ? "<img src=\"" + m.logo1 + "\" onerror=\"this.parentNode.innerHTML=&#39;<span class=emoji>🏏</span>&#39;\">"
+      : "<span class=\"emoji\">🏏</span>";
     var logo2Html = m.logo2
-      ? '<img src="' + m.logo2 + '" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">'
-      : '<span class="emoji">🏏</span>';
+      ? "<img src=\"" + m.logo2 + "\" onerror=\"this.parentNode.innerHTML=&#39;<span class=emoji>🏏</span>&#39;\">"
+      : "<span class=\"emoji\">🏏</span>";
+    var tid = String(m.id).replace(/'/g, "");
+    var ta = String(m.teamA).replace(/'/g, "");
+    var tb = String(m.teamB).replace(/'/g, "");
+    var tt = String(m.time || "TBD").replace(/'/g, "");
     var oddsHtml = isOpen
-      ? '<div class="odds-row">' +
-          '<div class="odds-btn" onclick="openBet('' + m.id + '','' + m.teamA + '','' + m.teamA + ' vs ' + m.teamB + '','' + (m.time||'TBD') + '')">' +
-            '<span class="odds-lbl">' + m.teamA + '</span>' +
-            '<span class="odds-val">1.95</span>' +
-          '</div>' +
-          '<div class="odds-btn" onclick="openBet('' + m.id + '','' + m.teamB + '','' + m.teamA + ' vs ' + m.teamB + '','' + (m.time||'TBD') + '')">' +
-            '<span class="odds-lbl">' + m.teamB + '</span>' +
-            '<span class="odds-val">1.95</span>' +
-          '</div>' +
-        '</div>'
-      : '<div style="text-align:center;padding:10px 0;font-size:13px;color:var(--muted);">🔒 Betting is closed for this match</div>';
-    return '<div class="match-card" style="' + (isOpen ? '' : 'opacity:0.75;') + '">' +
-      '<div class="match-head">' + statusBadge + '<span class="match-time">⏰ ' + timeLabel + '</span></div>' +
-      '<div class="teams-row">' +
-        '<div class="team-side"><div class="team-logo-wrap">' + logo1Html + '</div><div class="team-name">' + m.teamA + '</div></div>' +
-        '<div class="vs-chip">VS</div>' +
-        '<div class="team-side"><div class="team-logo-wrap">' + logo2Html + '</div><div class="team-name">' + m.teamB + '</div></div>' +
-      '</div>' +
+      ? "<div class=\"odds-row\">" +
+          "<div class=\"odds-btn\" onclick=\"openBet(&#39;" + tid + "&#39;,&#39;" + ta + "&#39;,&#39;" + ta + " vs " + tb + "&#39;,&#39;" + tt + "&#39;)\">" +
+            "<span class=\"odds-lbl\">" + m.teamA + "</span>" +
+            "<span class=\"odds-val\">1.95</span>" +
+          "</div>" +
+          "<div class=\"odds-btn\" onclick=\"openBet(&#39;" + tid + "&#39;,&#39;" + tb + "&#39;,&#39;" + ta + " vs " + tb + "&#39;,&#39;" + tt + "&#39;)\">" +
+            "<span class=\"odds-lbl\">" + m.teamB + "</span>" +
+            "<span class=\"odds-val\">1.95</span>" +
+          "</div>" +
+        "</div>"
+      : "<div style=\"text-align:center;padding:10px 0;font-size:13px;color:var(--muted);\">🔒 Betting is closed for this match</div>";
+    return "<div class=\"match-card\" style=\"" + (isOpen ? "" : "opacity:0.75;") + "\">" +
+      "<div class=\"match-head\">" + statusBadge + "<span class=\"match-time\">⏰ " + timeLabel + "</span></div>" +
+      "<div class=\"teams-row\">" +
+        "<div class=\"team-side\"><div class=\"team-logo-wrap\">" + logo1Html + "</div><div class=\"team-name\">" + m.teamA + "</div></div>" +
+        "<div class=\"vs-chip\">VS</div>" +
+        "<div class=\"team-side\"><div class=\"team-logo-wrap\">" + logo2Html + "</div><div class=\"team-name\">" + m.teamB + "</div></div>" +
+      "</div>" +
       oddsHtml +
-    '</div>';
-  }).join('');
+    "</div>";
+  }).join("");
 }
 
 // ── Bet ────────────────────────────────────────────────────
