@@ -1,0 +1,17 @@
+{
+  "name": "tossify",
+  "version": "2.0.0",
+  "description": "Tossify – Cricket Toss Betting Platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "uuid": "^9.0.0",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0"
+  }
+}

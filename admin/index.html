@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tossify Control Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090f;--card:#0f1520;--card2:#18212f;--border:#1e2d42;--green:#2ecc40;--green2:#27ae36;--red:#e74c3c;--gold:#f0c040;--blue:#3498db;--text:#dce8f5;--muted:#5a7a99;--r:10px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:radial-gradient(ellipse at 50% 30%,#0a2e14,var(--bg));}
+.lcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 28px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+.lcard h2{font-size:28px;color:var(--green);margin-bottom:4px;}
+.lcard p{color:var(--muted);font-size:12px;margin-bottom:22px;}
+.field{margin-bottom:13px;}
+.field label{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+.field input,.field select,.field textarea{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--green);}
+.field select option{background:var(--bg);}
+.btn{padding:10px 18px;border-radius:8px;border:none;font-size:13px;font-weight:800;cursor:pointer;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;transition:all .2s;}
+.btn-full{width:100%;}
+.btn-green{background:var(--green);color:#000;}
+.btn-green:hover{background:var(--green2);}
+.btn-red{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3);}
+.btn-gold{background:rgba(240,192,64,.15);color:var(--gold);border:1px solid rgba(240,192,64,.3);}
+.btn-blue{background:rgba(52,152,219,.15);color:var(--blue);border:1px solid rgba(52,152,219,.3);}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.btn-outline:hover{border-color:var(--green);color:var(--green);}
+.msg{font-size:13px;padding:9px;border-radius:8px;margin-top:10px;display:none;text-align:center;font-weight:700;}
+.msg.err{background:rgba(231,76,60,.12);color:var(--red);display:block;}
+
+/* LAYOUT */
+#mainScreen{display:none;}
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:11px 18px;display:flex;justify-content:space-between;align-items:center;}
+.header h2{font-size:20px;color:var(--green);}
+.hlive{font-size:12px;background:rgba(46,204,64,.1);color:var(--green);padding:4px 10px;border-radius:20px;border:1px solid rgba(46,204,64,.2);}
+.mobile-tabs{display:none;background:var(--card);border-bottom:1px solid var(--border);padding:0 8px;overflow-x:auto;gap:2px;flex-shrink:0;}
+.mobile-tabs::-webkit-scrollbar{height:0;}
+@media(max-width:680px){.sidebar{display:none!important;}.mobile-tabs{display:flex!important;}}
+.layout{display:flex;min-height:calc(100vh - 53px);}
+.sidebar{width:195px;background:var(--card);border-right:1px solid var(--border);padding:10px 7px;flex-shrink:0;}
+.snav{display:block;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);transition:all .2s;margin-bottom:2px;white-space:nowrap;}
+.snav.active{background:rgba(46,204,64,.1);color:var(--green);}
+.snav .si{margin-right:8px;}
+.msnav{padding:11px 14px;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;transition:all .2s;font-family:'Bebas Neue',sans-serif;letter-spacing:.5px;}
+.msnav.active{color:var(--green);border-bottom-color:var(--green);}
+.content{flex:1;padding:16px;overflow-x:hidden;}
+.pg{display:none;}.pg.active{display:block;}
+.pg-title{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#fff;margin-bottom:14px;letter-spacing:1px;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:9px;margin-bottom:18px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:14px;}
+.sl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;font-weight:700;}
+.sv{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;}
+.sv.g{color:var(--green)}.sv.r{color:var(--red)}.sv.go{color:var(--gold)}.sv.b{color:var(--blue)}
+
+/* TABLE */
+.tbl{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px;}
+.tr{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px;}
+.tr:last-child{border-bottom:none;}
+.tr-name{font-weight:800;font-size:14px;color:#fff;margin-bottom:2px;}
+.tr-sub{font-size:11px;color:var(--muted);line-height:1.5;}
+.tr-act{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.chip{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:800;letter-spacing:.5px;}
+.cg{background:rgba(46,204,64,.15);color:var(--green);}
+.cr{background:rgba(231,76,60,.15);color:var(--red);}
+.cgo{background:rgba(240,192,64,.15);color:var(--gold);}
+.cb{background:rgba(52,152,219,.15);color:var(--blue);}
+.search{width:100%;background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;font-family:inherit;outline:none;margin-bottom:11px;}
+.search:focus{border-color:var(--green);}
+.add-form{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:15px;margin-bottom:16px;}
+.add-form h3{font-size:16px;margin-bottom:12px;color:#fff;}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:9px;}
+@media(max-width:500px){.frow{grid-template-columns:1fr;}}
+.empty{text-align:center;padding:28px;color:var(--muted);font-size:13px;}
+.pending-badge{background:rgba(240,192,64,.12);color:var(--gold);font-size:12px;padding:6px 12px;border-radius:8px;margin-bottom:10px;display:inline-block;font-weight:700;}
+.reply-inp{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;outline:none;margin-bottom:6px;}
+.reply-inp:focus{border-color:var(--green);}
+.sep{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* TOAST */
+.toast{position:fixed;top:18px;right:18px;background:var(--card2);color:var(--text);padding:11px 18px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transition:all .3s;pointer-events:none;border:1px solid var(--border);transform:translateY(-8px);font-weight:700;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.tg{border-color:var(--green);color:var(--green);}
+.toast.tr{border-color:var(--red);color:var(--red);}
+.toast.tgo{border-color:var(--gold);color:var(--gold);}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="lcard">
+    <h2>🔐 TOSSIFY ADMIN</h2>
+    <p>Restricted access — Control Panel</p>
+    <div class="field"><label>Username</label><input id="aUser" placeholder="admin" autocomplete="username"></div>
+    <div class="field"><label>Password</label><input id="aPass" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="btn btn-green btn-full" onclick="doLogin()">ACCESS PANEL</button>
+    <div class="msg" id="aMsg"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainScreen">
+  <div class="header">
+    <h2>🪙 TOSSIFY ADMIN PANEL</h2>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="hlive" id="hlive">● Live</span>
+      <button class="btn btn-outline" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <!-- Mobile tabs -->
+  <div class="mobile-tabs" id="mobileTabs">
+    <div class="msnav active" onclick="goPage('dashboard',this)">📊 Dash</div>
+    <div class="msnav" onclick="goPage('users',this)">👥 Users</div>
+    <div class="msnav" onclick="goPage('deposits',this)">💳 Deposits</div>
+    <div class="msnav" onclick="goPage('withdrawals',this)">🏦 Withdraw</div>
+    <div class="msnav" onclick="goPage('bets',this)">🎯 Bets</div>
+    <div class="msnav" onclick="goPage('matches',this)">🏏 Matches</div>
+    <div class="msnav" onclick="goPage('tickets',this)">🎫 Support</div>
+  </div>
+  <div class="layout">
+    <div class="sidebar" id="sidebar">
+      <div class="snav active" onclick="goPage('dashboard',this)"><span class="si">📊</span>Dashboard</div>
+      <div class="snav" onclick="goPage('users',this)"><span class="si">👥</span>Users</div>
+      <div class="snav" onclick="goPage('deposits',this)"><span class="si">💳</span>Deposits</div>
+      <div class="snav" onclick="goPage('withdrawals',this)"><span class="si">🏦</span>Withdrawals</div>
+      <div class="snav" onclick="goPage('bets',this)"><span class="si">🎯</span>Bets</div>
+      <div class="snav" onclick="goPage('matches',this)"><span class="si">🏏</span>Matches</div>
+      <div class="snav" onclick="goPage('tickets',this)"><span class="si">🎫</span>Support</div>
+    </div>
+    <div class="content">
+      <div class="pg active" id="pg-dashboard"></div>
+      <div class="pg" id="pg-users"></div>
+      <div class="pg" id="pg-deposits"></div>
+      <div class="pg" id="pg-withdrawals"></div>
+      <div class="pg" id="pg-bets"></div>
+      <div class="pg" id="pg-matches"></div>
+      <div class="pg" id="pg-tickets"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let ATOKEN = sessionStorage.getItem('a_tok') || '';
+let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[] };
+let currentPage = 'dashboard';
+let userQuery = '';
+
+function toast(msg, type='') {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast show'+(type?' t'+type:'');
+  setTimeout(()=>t.className='toast',2800);
+}
+async function api(method,url,body){
+  const r=await fetch(url,{method,headers:{'Content-Type':'application/json','x-token':ATOKEN},body:body?JSON.stringify(body):undefined});
+  return r.json();
+}
+
+async function doLogin(){
+  const u=document.getElementById('aUser').value.trim();
+  const p=document.getElementById('aPass').value;
+  const msg=document.getElementById('aMsg');
+  const r=await api('POST','/api/admin/login',{username:u,password:p});
+  if(r.ok){
+    ATOKEN=r.token; sessionStorage.setItem('a_tok',ATOKEN);
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainScreen').style.display='block';
+    socket.emit('admin:join',ATOKEN);
+    await loadAll();
+  } else { msg.className='msg err'; msg.textContent=r.msg; }
+}
+
+async function doLogout(){
+  await api('POST','/api/admin/logout');
+  ATOKEN=''; sessionStorage.removeItem('a_tok');
+  location.reload();
+}
+
+async function loadAll(){
+  const r=await api('GET','/api/admin/data');
+  if(!r.ok) return;
+  DB=r;
+  renderPage(currentPage);
+}
+
+// Auto login
+if(ATOKEN){
+  api('GET','/api/admin/data').then(r=>{
+    if(r.ok){
+      DB=r;
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('mainScreen').style.display='block';
+      socket.emit('admin:join',ATOKEN);
+      renderPage('dashboard');
+    }
+  });
+}
+
+// Real-time
+socket.on('db:bets',        d=>{DB.bets=d;       if(currentPage==='bets'||currentPage==='dashboard') renderPage(currentPage);});
+socket.on('db:deposits',    d=>{DB.deposits=d;    if(currentPage==='deposits'||currentPage==='dashboard') renderPage(currentPage);});
+socket.on('db:withdrawals', d=>{DB.withdrawals=d; if(currentPage==='withdrawals'||currentPage==='dashboard') renderPage(currentPage);});
+socket.on('db:tickets',     d=>{DB.tickets=d;     if(currentPage==='tickets'||currentPage==='dashboard') renderPage(currentPage);});
+
+function goPage(name, el){
+  // Update sidebar + mobile nav
+  document.querySelectorAll('.snav,.msnav').forEach(n=>n.classList.remove('active'));
+  // Mark clicked and its counterpart active
+  el.classList.add('active');
+  // find matching in other nav
+  document.querySelectorAll('.snav,.msnav').forEach(n=>{
+    const txt = n.textContent.replace(/[^a-zA-Z]/g,'').toLowerCase();
+    const target = name.toLowerCase();
+    if(txt.includes(target)||target.includes(txt.slice(0,4))) n.classList.add('active');
+  });
+  currentPage=name;
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pg-'+name).classList.add('active');
+  renderPage(name);
+}
+
+function renderPage(n){
+  if(n==='dashboard')   renderDash();
+  else if(n==='users')        renderUsers();
+  else if(n==='deposits')     renderDeposits();
+  else if(n==='withdrawals')  renderWithdrawals();
+  else if(n==='bets')         renderBets();
+  else if(n==='matches')      renderMatches();
+  else if(n==='tickets')      renderTickets();
+}
+
+// ─── DASHBOARD ──────────────────────────────────────────────
+function renderDash(){
+  const el=document.getElementById('pg-dashboard');
+  const totDep=DB.deposits.filter(d=>d.status==='Approved').reduce((s,d)=>s+d.amount,0);
+  const totWith=DB.withdrawals.filter(w=>w.status==='Approved').reduce((s,w)=>s+w.amount,0);
+  const pendBets=DB.bets.filter(b=>b.status==='Pending').length;
+  el.innerHTML=`<div class="pg-title">Dashboard</div>
+  <div class="stats">
+    <div class="stat"><div class="sl">Total Users</div><div class="sv g">${DB.users.length}</div></div>
+    <div class="stat"><div class="sl">Total Bets</div><div class="sv b">${DB.bets.length}</div></div>
+    <div class="stat"><div class="sl">Pending Bets</div><div class="sv go">${pendBets}</div></div>
+    <div class="stat"><div class="sl">Pending Dep</div><div class="sv go">${DB.deposits.filter(d=>d.status==='Pending').length}</div></div>
+    <div class="stat"><div class="sl">Pending With</div><div class="sv go">${DB.withdrawals.filter(w=>w.status==='Pending').length}</div></div>
+    <div class="stat"><div class="sl">Total Deposited</div><div class="sv g">₹${totDep.toFixed(0)}</div></div>
+    <div class="stat"><div class="sl">Total Withdrawn</div><div class="sv r">₹${totWith.toFixed(0)}</div></div>
+    <div class="stat"><div class="sl">Live Matches</div><div class="sv g">${(DB.allMatches||[]).length}</div></div>
+    <div class="stat"><div class="sl">Open Tickets</div><div class="sv go">${DB.tickets.filter(t=>t.status==='Open').length}</div></div>
+  </div>
+  ${pendBets?`<div class="pending-badge">⚠️ ${pendBets} unsettled bet${pendBets>1?'s':''} awaiting result</div>`:''}
+  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">Recent Activity</div>
+  <div class="tbl">${DB.bets.slice(0,8).map(b=>`
+    <div class="tr">
+      <div class="tr-name">${b.userName} — ₹${parseFloat(b.amount).toFixed(2)} on <span style="color:var(--green)">${b.team}</span></div>
+      <div class="tr-sub">${b.match} • ${b.time}</div>
+      <div style="margin-top:4px;"><span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}">${b.status}</span></div>
+    </div>`).join('')||'<div class="empty">No bets yet</div>'}</div>`;
+}
+
+// ─── USERS ──────────────────────────────────────────────────
+function renderUsers(){
+  const el=document.getElementById('pg-users');
+  const q=userQuery.toLowerCase();
+  const filtered=DB.users.filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  el.innerHTML=`<div class="pg-title">Users (${DB.users.length})</div>
+  <input class="search" placeholder="🔍 Search name, username or email..." value="${userQuery}" oninput="userQuery=this.value;renderUsers()">
+  <div class="tbl">${filtered.length?filtered.map(u=>`
+    <div class="tr">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div class="tr-name">${u.name} <span class="chip ${u.blocked?'cr':'cg'}">${u.blocked?'Blocked':'Active'}</span></div>
+          <div class="tr-sub">@${u.username} • ${u.email||'—'} • ${u.mobile||'—'}</div>
+          <div class="tr-sub">Joined: ${u.joined} • Balance: <strong style="color:var(--green)">₹${(u.balance||0).toFixed(2)}</strong></div>
+        </div>
+      </div>
+      <div class="tr-act">
+        <button class="btn btn-green" onclick="addBal('${u.id}','${u.name}')">+ Add Balance</button>
+        <button class="btn btn-red" onclick="dedBal('${u.id}','${u.name}')">− Deduct</button>
+        <button class="btn ${u.blocked?'btn-blue':'btn-red'}" onclick="toggleBlock('${u.id}')">${u.blocked?'Unblock':'Block'}</button>
+      </div>
+    </div>`).join(''):'<div class="empty">No users found</div>'}</div>`;
+}
+async function addBal(id,name){
+  const amt=parseFloat(prompt(`Add balance to ${name} (₹):`)||0);
+  if(amt>0){const r=await api('POST','/api/admin/user/balance',{userId:id,amount:amt,type:'add'});if(r.ok){toast(`₹${amt} added to ${name}`,'g');await loadAll();}}
+}
+async function dedBal(id,name){
+  const amt=parseFloat(prompt(`Deduct from ${name} (₹):`)||0);
+  if(amt>0){const r=await api('POST','/api/admin/user/balance',{userId:id,amount:amt,type:'deduct'});if(r.ok){toast(`₹${amt} deducted`,'r');await loadAll();}}
+}
+async function toggleBlock(id){
+  const r=await api('POST','/api/admin/user/block',{userId:id});
+  if(r.ok){toast(r.blocked?'User blocked':'User unblocked',r.blocked?'r':'g');await loadAll();}
+}
+
+// ─── DEPOSITS ───────────────────────────────────────────────
+function renderDeposits(){
+  const el=document.getElementById('pg-deposits');
+  const pend=DB.deposits.filter(d=>d.status==='Pending').length;
+  el.innerHTML=`<div class="pg-title">Deposits</div>
+  ${pend?`<div class="pending-badge">⚠️ ${pend} pending deposit${pend>1?'s':''}</div>`:''}
+  <div class="tbl">${DB.deposits.length?DB.deposits.map(d=>`
+    <div class="tr">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div class="tr-name">${d.userName} — <strong style="color:var(--green)">₹${d.amount}</strong></div>
+          <div class="tr-sub">UTR: <strong>${d.utr}</strong> • ${d.time}</div>
+        </div>
+        <span class="chip ${d.status==='Approved'?'cg':d.status==='Rejected'?'cr':'cgo'}">${d.status}</span>
+      </div>
+      ${d.status==='Pending'?`<div class="tr-act">
+        <button class="btn btn-green" onclick="approveDep('${d.id}')">✓ Approve</button>
+        <button class="btn btn-red" onclick="rejectDep('${d.id}')">✗ Reject</button>
+      </div>`:''}
+    </div>`).join(''):'<div class="empty">No deposit requests</div>'}</div>`;
+}
+async function approveDep(id){const r=await api('POST','/api/admin/deposit/approve',{id});if(r.ok){toast('Deposit approved — balance updated!','g');await loadAll();}}
+async function rejectDep(id){const r=await api('POST','/api/admin/deposit/reject',{id});if(r.ok){toast('Deposit rejected','r');await loadAll();}}
+
+// ─── WITHDRAWALS ────────────────────────────────────────────
+function renderWithdrawals(){
+  const el=document.getElementById('pg-withdrawals');
+  const pend=DB.withdrawals.filter(w=>w.status==='Pending').length;
+  el.innerHTML=`<div class="pg-title">Withdrawals</div>
+  ${pend?`<div class="pending-badge">⚠️ ${pend} pending withdrawal${pend>1?'s':''}</div>`:''}
+  <div class="tbl">${DB.withdrawals.length?DB.withdrawals.map(w=>`
+    <div class="tr">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div class="tr-name">${w.userName} — <strong style="color:var(--red)">₹${w.amount}</strong></div>
+          <div class="tr-sub">${w.bank?`${w.bank.holder} • ${w.bank.bank} • ${w.bank.acc} • ${w.bank.ifsc}`:''}</div>
+          <div class="tr-sub">${w.time}</div>
+        </div>
+        <span class="chip ${w.status==='Approved'?'cg':w.status==='Rejected'?'cr':'cgo'}">${w.status}</span>
+      </div>
+      ${w.status==='Pending'?`<div class="tr-act">
+        <button class="btn btn-green" onclick="approveWith('${w.id}')">✓ Approve</button>
+        <button class="btn btn-red" onclick="rejectWith('${w.id}')">✗ Reject</button>
+      </div>`:''}
+    </div>`).join(''):'<div class="empty">No withdrawal requests</div>'}</div>`;
+}
+async function approveWith(id){const r=await api('POST','/api/admin/withdrawal/approve',{id});if(r.ok){toast('Withdrawal approved!','g');await loadAll();}}
+async function rejectWith(id){const r=await api('POST','/api/admin/withdrawal/reject',{id});if(r.ok){toast('Withdrawal rejected — amount refunded','r');await loadAll();}}
+
+// ─── BETS ─── KEY: settle reflects to user in real time ──────
+function renderBets(){
+  const el=document.getElementById('pg-bets');
+  const pend=DB.bets.filter(b=>b.status==='Pending').length;
+  el.innerHTML=`<div class="pg-title">Bets (${DB.bets.length})</div>
+  ${pend?`<div class="pending-badge">⚠️ ${pend} unsettled bet${pend>1?'s':''} — settle results below</div>`:''}
+  <div class="tbl">${DB.bets.length?DB.bets.map(b=>`
+    <div class="tr" id="bet-${b.id}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div class="tr-name">${b.userName} — ₹${parseFloat(b.amount).toFixed(2)}</div>
+          <div class="tr-sub">${b.match}</div>
+          <div class="tr-sub">Pick: <strong style="color:var(--green)">${b.team}</strong> • Odds: 1.95 • Return: ₹${b.potential}</div>
+          <div class="tr-sub">${b.time}</div>
+        </div>
+        <span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}" id="bc-${b.id}">${b.status}</span>
+      </div>
+      ${b.status==='Pending'?`
+      <div class="tr-act">
+        <button class="btn btn-green" onclick="settleBet('${b.id}','Won')">🏆 WON</button>
+        <button class="btn btn-red" onclick="settleBet('${b.id}','Lost')">❌ LOST</button>
+        <button class="btn btn-gold" onclick="settleBet('${b.id}','Void')">↩ VOID</button>
+      </div>`:''}
+    </div>`).join(''):'<div class="empty">No bets yet</div>'}</div>`;
+}
+
+async function settleBet(id, result){
+  if(!confirm(`Settle bet as "${result}"? This will immediately notify the user.`)) return;
+  const r=await api('POST','/api/admin/bet/settle',{id,result});
+  if(r.ok){
+    toast(`Bet settled: ${result} — user notified in real time!`,result==='Won'?'g':result==='Void'?'go':'r');
+    await loadAll();
+  } else toast(r.msg,'r');
+}
+
+// ─── MATCHES ────────────────────────────────────────────────
+function renderMatches(){
+  const el=document.getElementById('pg-matches');
+  el.innerHTML=`<div class="pg-title">Matches</div>
+  <div class="add-form">
+    <h3>Add New Match</h3>
+    <div class="frow">
+      <div class="field" style="margin:0"><label>Team A</label><input id="amA" placeholder="e.g. Mumbai Indians"></div>
+      <div class="field" style="margin:0"><label>Team B</label><input id="amB" placeholder="e.g. Delhi Capitals"></div>
+    </div>
+    <div class="field" style="margin-bottom:10px"><label>Toss Time</label><input id="amT" placeholder="e.g. 7:30 PM"></div>
+    <button class="btn btn-green" onclick="addMatch()">+ ADD MATCH</button>
+  </div>
+  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">
+    Live Matches (${(DB.allMatches||[]).length} total — includes scraped)
+  </div>
+  <div class="tbl">${(DB.allMatches||[]).length?(DB.allMatches||[]).map(m=>`
+    <div class="tr">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+        <div>
+          <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
+          <div class="tr-sub">Toss: ${m.time||'TBD'} • Source: ${m.source||'admin'}</div>
+        </div>
+        <span class="chip ${m.active?'cg':'cr'}">${m.active?'Live':'Ended'}</span>
+      </div>
+      ${m.source==='admin'?`<div class="tr-act">
+        <button class="btn ${m.active?'btn-red':'btn-green'}" onclick="toggleMatch('${m.id}')">${m.active?'End':'Reactivate'}</button>
+        <button class="btn btn-outline" onclick="deleteMatch('${m.id}')">Delete</button>
+      </div>`:
+      '<div style="font-size:11px;color:var(--muted);margin-top:6px;">Scraped match — managed automatically</div>'}
+    </div>`).join(''):'<div class="empty">No matches</div>'}</div>`;
+}
+async function addMatch(){
+  const a=document.getElementById('amA').value.trim();
+  const b=document.getElementById('amB').value.trim();
+  const t=document.getElementById('amT').value.trim();
+  if(!a||!b){toast('Enter both team names','r');return;}
+  const r=await api('POST','/api/admin/match/add',{teamA:a,teamB:b,time:t});
+  if(r.ok){toast('Match added — visible to all users now!','g');await loadAll();}
+}
+async function toggleMatch(id){const r=await api('POST','/api/admin/match/toggle',{id});if(r.ok){toast('Match status updated','g');await loadAll();}}
+async function deleteMatch(id){if(!confirm('Delete this match?'))return;const r=await api('POST','/api/admin/match/delete',{id});if(r.ok){toast('Match deleted','r');await loadAll();}}
+
+// ─── TICKETS ────────────────────────────────────────────────
+function renderTickets(){
+  const el=document.getElementById('pg-tickets');
+  const open=DB.tickets.filter(t=>t.status==='Open').length;
+  el.innerHTML=`<div class="pg-title">Support Tickets</div>
+  ${open?`<div class="pending-badge">⚠️ ${open} open ticket${open>1?'s':''}</div>`:''}
+  <div class="tbl">${DB.tickets.length?DB.tickets.map(t=>`
+    <div class="tr">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div>
+          <div class="tr-name">#${t.id} — ${t.subject}</div>
+          <div class="tr-sub">${t.userName} • ${t.time}</div>
+        </div>
+        <span class="chip ${t.status==='Closed'?'cr':t.status==='Replied'?'cg':'cgo'}">${t.status}</span>
+      </div>
+      <div style="margin:8px 0;font-size:13px;color:var(--text);line-height:1.5;background:var(--card2);border-radius:6px;padding:8px;">${t.message}</div>
+      ${t.reply?`<div style="font-size:12px;color:var(--green);margin-bottom:8px;padding:6px;background:rgba(46,204,64,.05);border-radius:6px;border-left:2px solid var(--green)"><strong>Your Reply:</strong> ${t.reply}</div>`:''}
+      ${t.status!=='Closed'?`
+        <input class="reply-inp" id="tr-${t.id}" placeholder="Type your reply here..." value="">
+        <div class="tr-act">
+          <button class="btn btn-green" onclick="replyTicket('${t.id}')">Send Reply</button>
+          <button class="btn btn-red" onclick="closeTicket('${t.id}')">Close Ticket</button>
+        </div>`:'<div style="font-size:11px;color:var(--muted);margin-top:4px;">Ticket closed</div>'}
+    </div>`).join(''):'<div class="empty">No support tickets</div>'}</div>`;
+}
+async function replyTicket(id){
+  const reply=document.getElementById('tr-'+id)?.value?.trim();
+  if(!reply){toast('Enter a reply','r');return;}
+  const r=await api('POST','/api/admin/ticket/reply',{id,reply});
+  if(r.ok){toast('Reply sent to user!','g');await loadAll();}
+}
+async function closeTicket(id){
+  const r=await api('POST','/api/admin/ticket/close',{id});
+  if(r.ok){toast('Ticket closed','r');await loadAll();}
+}
+</script>
+</body>
+</html>

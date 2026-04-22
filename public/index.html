@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Tossify – Cricket Toss Betting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:      #07090f;
+  --card:    #0f1520;
+  --card2:   #18212f;
+  --border:  #1e2d42;
+  --green:   #2ecc40;
+  --green2:  #27ae36;
+  --darkgreen:#1a4a23;
+  --navy:    #0d1f3c;
+  --red:     #e74c3c;
+  --gold:    #f0c040;
+  --text:    #dce8f5;
+  --muted:   #5a7a99;
+  --white:   #ffffff;
+  --r:       12px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── SCREENS ── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ── AUTH ── */
+#authScreen {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at 30% 0%, #0a2e14 0%, var(--bg) 55%),
+              radial-gradient(ellipse at 80% 100%, #0d1f3c 0%, transparent 50%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+}
+.logo-block { text-align: center; margin-bottom: 28px; }
+.logo-block img { width: 200px; max-width: 70vw; filter: drop-shadow(0 0 20px rgba(46,204,64,.35)); }
+.logo-block p { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
+.auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.auth-tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 22px; gap: 4px; }
+.auth-tab { flex: 1; padding: 9px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--muted); transition: all .2s; }
+.auth-tab.active { background: var(--green); color: #000; }
+.auth-form { display: none; } .auth-form.active { display: block; }
+
+/* ── FORM ── */
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
+.field input, .field select, .field textarea {
+  width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 10px; padding: 11px 13px; color: var(--text); font-size: 14px;
+  font-family: inherit; outline: none; transition: border-color .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green); }
+.field select option { background: var(--bg); }
+.btn { display: block; width: 100%; padding: 13px; border-radius: 10px; border: none; font-size: 14px; font-weight: 800; cursor: pointer; transition: all .2s; font-family: 'Bebas Neue', sans-serif; letter-spacing: 2px; text-align: center; }
+.btn-green  { background: var(--green); color: #000; }
+.btn-green:hover  { background: var(--green2); transform: translateY(-1px); }
+.btn-red    { background: var(--red); color: #fff; }
+.btn-navy   { background: var(--navy); color: var(--text); border: 1.5px solid var(--border); }
+.btn-outline{ background: transparent; color: var(--green); border: 1.5px solid var(--green); }
+.btn-outline:hover { background: rgba(46,204,64,.1); }
+.msg { font-size: 13px; text-align: center; padding: 9px 12px; border-radius: 8px; margin-top: 10px; display: none; font-weight: 600; }
+.msg.ok  { background: rgba(46,204,64,.12); color: var(--green); display: block; }
+.msg.err { background: rgba(231,76,60,.12);  color: var(--red);   display: block; }
+.demo-btn { margin-top: 14px; background: rgba(255,255,255,.04); border: 1.5px dashed var(--border); color: var(--muted); border-radius: 10px; padding: 11px; cursor: pointer; font-size: 13px; font-weight: 700; text-align: center; transition: all .2s; letter-spacing: .5px; }
+.demo-btn:hover { border-color: var(--green); color: var(--green); }
+.demo-badge { display: inline-block; background: rgba(240,192,64,.15); color: var(--gold); font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 800; letter-spacing: .5px; vertical-align: middle; margin-left: 6px; }
+
+/* ── APP SHELL ── */
+#appScreen { padding-bottom: 68px; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(90deg, #0a1e0f 0%, var(--card) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;
+}
+.topbar-logo { display: flex; align-items: center; gap: 10px; }
+.topbar-logo img { height: 32px; filter: drop-shadow(0 0 8px rgba(46,204,64,.4)); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.bal-pill { background: rgba(46,204,64,.12); color: var(--green); font-size: 13px; padding: 5px 12px; border-radius: 20px; font-weight: 800; border: 1px solid rgba(46,204,64,.2); }
+.clk { font-size: 12px; color: var(--muted); font-weight: 700; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1.5px solid var(--border); display: flex; z-index: 100; }
+.nav-item { flex: 1; padding: 9px 4px 7px; text-align: center; cursor: pointer; color: var(--muted); transition: color .2s; }
+.nav-item.active { color: var(--green); }
+.nav-icon { font-size: 21px; display: block; }
+.nav-label { font-size: 9px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
+.page { display: none; padding: 14px; } .page.active { display: block; }
+.sec-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--white); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; letter-spacing: 1px; }
+
+/* ── LIVE BADGE ── */
+.live-pill { background: rgba(231,76,60,.15); color: var(--red); font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
+.ldot { width: 6px; height: 6px; background: var(--red); border-radius: 50%; animation: pulse 1.1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
+
+/* ── MATCH CARD ── */
+.match-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; }
+.match-card::before { content:''; position:absolute; top:0;left:0;right:0;height:2px; background: linear-gradient(90deg, var(--green), var(--navy)); }
+.match-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.match-time { font-size: 12px; color: var(--muted); font-weight: 700; }
+.teams-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.team-side { text-align: center; }
+.team-logo-wrap { width: 46px; height: 46px; border-radius: 50%; background: var(--card2); display: flex; align-items: center; justify-content: center; margin: 0 auto 7px; overflow: hidden; border: 1.5px solid var(--border); }
+.team-logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.team-logo-wrap .emoji { font-size: 22px; }
+.team-name { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--white); letter-spacing: .5px; }
+.vs-chip { font-family: 'Bebas Neue', sans-serif; font-size: 14px; color: var(--muted); background: var(--card2); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border); }
+.odds-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px; }
+.odds-btn { background: rgba(46,204,64,.07); border: 1.5px solid rgba(46,204,64,.25); color: var(--green); border-radius: 10px; padding: 10px 8px; text-align: center; cursor: pointer; transition: all .2s; }
+.odds-btn:hover, .odds-btn:active { background: rgba(46,204,64,.18); border-color: var(--green); transform: scale(1.02); }
+.odds-lbl { font-size: 11px; color: var(--muted); display: block; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.odds-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; }
+
+/* ── BET MODAL ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+.overlay.open { display: flex; }
+.modal { background: var(--card); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 22px 18px; width: 100%; max-width: 480px; animation: slideup .22s ease; }
+@keyframes slideup { from{transform:translateY(100%)} to{transform:translateY(0)} }
+.modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--white); margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 1px; }
+.modal-x { cursor: pointer; color: var(--muted); font-size: 20px; font-family: sans-serif; }
+.brow { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.brow span:first-child { color: var(--muted); }
+.brow span:last-child { font-weight: 700; }
+.ret-val { color: var(--green) !important; font-family: 'Bebas Neue', sans-serif; font-size: 20px !important; letter-spacing: 1px; }
+.bet-input { width: 100%; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 16px; font-family: inherit; outline: none; margin-top: 6px; }
+.bet-input:focus { border-color: var(--green); }
+
+/* ── WALLET ── */
+.bal-hero { background: linear-gradient(135deg, #0a2e14, #0d1f3c); border: 1px solid rgba(46,204,64,.25); border-radius: var(--r); padding: 22px; margin-bottom: 18px; text-align: center; }
+.bal-hero .bhl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+.bal-hero .bha { font-family: 'Bebas Neue', sans-serif; font-size: 46px; color: var(--green); letter-spacing: 2px; margin: 4px 0; }
+.wager-bar-wrap { margin-top: 12px; }
+.wager-bar-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 700; }
+.wager-bar-bg { background: var(--border); border-radius: 20px; height: 6px; overflow: hidden; }
+.wager-bar-fill { height: 100%; background: var(--green); border-radius: 20px; transition: width .5s ease; }
+.wtabs { display: flex; gap: 6px; margin-bottom: 18px; }
+.wtab { flex: 1; padding: 10px; text-align: center; border-radius: 10px; border: 1.5px solid var(--border); cursor: pointer; font-size: 13px; font-weight: 800; color: var(--muted); font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; transition: all .2s; }
+.wtab.active { border-color: var(--green); color: var(--green); background: rgba(46,204,64,.07); }
+.wtab-c { display: none; } .wtab-c.active { display: block; }
+.info-box { background: var(--card2); border-radius: 10px; padding: 13px; margin-bottom: 12px; font-size: 13px; color: var(--muted); line-height: 1.7; border-left: 3px solid var(--green); }
+.info-box strong { color: var(--text); }
+.lock-wall { text-align: center; padding: 40px 20px; }
+.lock-wall .lic { font-size: 52px; margin-bottom: 12px; display: block; }
+.lock-wall h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--white); margin-bottom: 8px; letter-spacing: 1px; }
+.lock-wall p { font-size: 13px; color: var(--muted); margin-bottom: 22px; line-height: 1.6; }
+.file-wrap { position: relative; }
+.file-wrap input[type=file] { opacity: 0; position: absolute; inset: 0; cursor: pointer; }
+.file-lbl { display: block; background: var(--bg); border: 1.5px dashed var(--border); border-radius: 10px; padding: 14px; text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; }
+.file-lbl span { display: block; font-size: 26px; margin-bottom: 5px; }
+.tx-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 13px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.tx-left .tl-type { font-weight: 800; font-size: 14px; }
+.tx-left .tl-time { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.tx-right .tr-amt { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1px; text-align: right; }
+.chip { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 800; letter-spacing: .5px; }
+.cg { background: rgba(46,204,64,.15); color: var(--green); }
+.cr { background: rgba(231,76,60,.15); color: var(--red); }
+.cgo { background: rgba(240,192,64,.15); color: var(--gold); }
+
+/* ── PROFILE ── */
+.prof-head { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 16px; margin-bottom: 18px; }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, var(--green), var(--navy)); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #000; flex-shrink: 0; border: 2px solid var(--green); }
+.prof-meta h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--white); letter-spacing: 1px; }
+.prof-meta p { font-size: 12px; color: var(--green); margin-top: 2px; font-weight: 700; }
+.info-list { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
+.info-row { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
+.info-row:last-child { border-bottom: none; }
+.ir-k { color: var(--muted); font-weight: 700; }
+.ir-v { font-weight: 700; color: var(--text); text-align: right; max-width: 58%; word-break: break-all; }
+.verify-banner { background: rgba(240,192,64,.07); border: 1px solid rgba(240,192,64,.3); border-radius: 10px; padding: 13px; margin-bottom: 16px; display: flex; gap: 10px; align-items: flex-start; }
+.vb-txt { font-size: 13px; color: var(--gold); }
+.vb-txt strong { display: block; font-size: 14px; margin-bottom: 3px; }
+.bet-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 13px; margin-bottom: 8px; }
+.bc-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.bc-match { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: var(--white); letter-spacing: .5px; }
+.bc-amt { font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: .5px; }
+.bc-bot { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.bc-team { color: var(--green); font-weight: 700; }
+
+/* ── SUPPORT ── */
+.ticket-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 13px; margin-bottom: 9px; }
+.tk-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.tk-id { font-family: 'Bebas Neue', sans-serif; font-size: 13px; color: var(--green); letter-spacing: .5px; }
+.tk-subj { font-size: 14px; font-weight: 800; color: var(--white); }
+.tk-msg { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.tk-reply { background: var(--card2); border-radius: 8px; padding: 10px; margin-top: 10px; font-size: 13px; color: var(--text); border-left: 2px solid var(--green); }
+.tk-reply small { color: var(--muted); display: block; font-size: 11px; margin-bottom: 4px; }
+
+/* ── DEMO BANNER ── */
+.demo-banner { background: rgba(240,192,64,.08); border: 1px solid rgba(240,192,64,.3); border-radius: 10px; padding: 12px 14px; margin: 14px 14px 0; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--gold); font-weight: 700; }
+
+/* ── RESULT TOAST ── */
+.toast { position: fixed; bottom: 78px; left: 50%; transform: translateX(-50%) translateY(14px); background: var(--card2); color: var(--text); padding: 11px 20px; border-radius: 10px; font-size: 13px; z-index: 999; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; border: 1px solid var(--border); max-width: 90vw; text-overflow: ellipsis; overflow: hidden; font-weight: 700; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.toast.tg { border-color: var(--green); color: var(--green); }
+.toast.tr { border-color: var(--red); color: var(--red); }
+.toast.tgo { border-color: var(--gold); color: var(--gold); }
+
+/* ── RESULT ANNOUNCEMENT ── */
+.result-pop { position: fixed; inset: 0; z-index: 300; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.8); }
+.result-pop.open { display: flex; }
+.result-box { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 30px 24px; text-align: center; max-width: 320px; width: 90%; animation: popin .3s ease; }
+@keyframes popin { from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
+.result-emoji { font-size: 60px; display: block; margin-bottom: 12px; }
+.result-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; margin-bottom: 6px; }
+.result-box p { color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+
+.empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
+.empty-state .ei { font-size: 40px; margin-bottom: 10px; display: block; }
+.empty-state p { font-size: 14px; }
+.sep { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+.small-note { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<!-- RESULT POP -->
+<div class="result-pop" id="resultPop">
+  <div class="result-box">
+    <span class="result-emoji" id="rEmoji">🎉</span>
+    <h3 id="rTitle">RESULT</h3>
+    <p id="rBody">—</p>
+    <button class="btn btn-green" style="max-width:160px;margin:0 auto;" onclick="closeResult()">OK</button>
+  </div>
+</div>
+
+<!-- ═══ AUTH ═══ -->
+<div id="authScreen" class="screen active">
+  <div class="logo-block">
+    <img src="logo.png" alt="Tossify" onerror="this.style.display='none';document.getElementById('logoText').style.display='block'">
+    <div id="logoText" style="display:none;font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--green);letter-spacing:3px;">TOSSIFY</div>
+    <p>Toss Ki Betting, Smart Choice.</p>
+  </div>
+  <div class="auth-card">
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuth('login')">Login</div>
+      <div class="auth-tab" onclick="switchAuth('register')">Register</div>
+    </div>
+    <!-- LOGIN -->
+    <div class="auth-form active" id="loginForm">
+      <div class="field"><label>Username</label><input id="lUser" placeholder="Your username" autocomplete="username"></div>
+      <div class="field"><label>Password</label><input id="lPass" type="password" placeholder="Your password" autocomplete="current-password"></div>
+      <button class="btn btn-green" onclick="doLogin()">LOGIN</button>
+      <div id="lMsg" class="msg"></div>
+      <div class="demo-btn" onclick="doDemo()">👀 Try Demo <span class="demo-badge">VIEW ONLY</span></div>
+    </div>
+    <!-- REGISTER -->
+    <div class="auth-form" id="registerForm">
+      <div class="field"><label>Full Name</label><input id="rName" placeholder="Your full name"></div>
+      <div class="field"><label>Username</label><input id="rUser" placeholder="Choose a username"></div>
+      <div class="field"><label>Password</label><input id="rPass" type="password" placeholder="Create password"></div>
+      <button class="btn btn-green" onclick="doRegister()">CREATE ACCOUNT</button>
+      <div id="rMsg" class="msg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="appScreen" class="screen">
+  <!-- Demo banner -->
+  <div class="demo-banner" id="demoBanner" style="display:none;">
+    <span>👀</span> You're in Demo Mode — <strong>Register</strong> to bet, deposit & withdraw.
+  </div>
+
+  <div class="topbar">
+    <div class="topbar-logo">
+      <img src="logo.png" alt="Tossify" onerror="this.outerHTML='<span style=\'font-family:Bebas Neue,sans-serif;font-size:22px;color:var(--green);letter-spacing:2px;\'>TOSSIFY</span>'">
+    </div>
+    <div class="topbar-right">
+      <div class="bal-pill" id="topBalWrap">₹<span id="topBal">0.00</span></div>
+      <div class="clk" id="clk">--:--:--</div>
+    </div>
+  </div>
+
+  <!-- LIVE MATCHES -->
+  <div class="page active" id="pageLive">
+    <div class="sec-title"><span class="ldot"></span> Live Matches</div>
+    <div id="matchList"></div>
+  </div>
+
+  <!-- WALLET -->
+  <div class="page" id="pageWallet">
+    <div id="wLocked" style="display:none;">
+      <div class="lock-wall">
+        <span class="lic">🔒</span>
+        <h3>Wallet Locked</h3>
+        <p>Please add your <strong style="color:var(--text)">Email</strong> and <strong style="color:var(--text)">Mobile Number</strong> in Profile to unlock the Wallet.</p>
+        <button class="btn btn-outline" style="max-width:200px;margin:0 auto;" onclick="switchNav('profile')">Go to Profile</button>
+      </div>
+    </div>
+    <div id="wOpen" style="display:none;">
+      <div class="bal-hero">
+        <div class="bhl">Available Balance</div>
+        <div class="bha">₹<span id="wBal">0.00</span></div>
+        <div class="wager-bar-wrap">
+          <div class="wager-bar-label">
+            <span>Wager Progress</span>
+            <span id="wagerPct">0%</span>
+          </div>
+          <div class="wager-bar-bg"><div class="wager-bar-fill" id="wagerFill" style="width:0%"></div></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:5px;" id="wagerNote">Wager 70% of deposits to unlock withdrawal</div>
+        </div>
+      </div>
+      <div class="wtabs">
+        <div class="wtab active" onclick="switchWTab('deposit',this)">Deposit</div>
+        <div class="wtab" onclick="switchWTab('withdraw',this)">Withdraw</div>
+        <div class="wtab" onclick="switchWTab('history',this)">History</div>
+      </div>
+      <!-- DEPOSIT -->
+      <div class="wtab-c active" id="wt-deposit">
+        <div class="info-box">
+          <strong>Send Payment To:</strong><br>
+          🏦 Bank: CANARA BANK &nbsp;|&nbsp; A/C: <strong>110217291024</strong><br>
+          IFSC: <strong>CNRB0017040</strong><br>
+          📱 UPI ID: <strong>dhpatnu@okicici</strong><br><br>
+          After payment, enter UTR and upload screenshot below.<br>
+          <strong>Minimum Deposit: ₹300</strong>
+        </div>
+        <div class="field"><label>12-Digit UTR / Reference</label><input id="utrInput" placeholder="e.g. 123456789012" maxlength="12"></div>
+        <div class="field"><label>Payment Screenshot</label>
+          <div class="file-wrap">
+            <div class="file-lbl" id="fileLbl"><span>📷</span>Tap to upload screenshot</div>
+            <input type="file" accept="image/*" onchange="handleFile(this)">
+          </div>
+        </div>
+        <div class="field"><label>Amount (₹)</label><input id="depAmt" type="number" placeholder="Min ₹300" min="300"></div>
+        <button class="btn btn-green" onclick="submitDeposit()">SUBMIT DEPOSIT REQUEST</button>
+      </div>
+      <!-- WITHDRAW -->
+      <div class="wtab-c" id="wt-withdraw">
+        <div class="info-box" id="wBankInfo"><strong>Your Bank:</strong> —</div>
+        <div class="info-box" id="wagerStatus" style="border-left-color:var(--gold)">
+          <strong style="color:var(--gold)">Wager Requirement:</strong> Loading...
+        </div>
+        <div class="field"><label>Withdraw Amount (₹)</label><input id="withAmt" type="number" placeholder="Min ₹300" min="300"></div>
+        <button class="btn btn-green" onclick="submitWithdraw()">REQUEST WITHDRAWAL</button>
+      </div>
+      <!-- HISTORY -->
+      <div class="wtab-c" id="wt-history">
+        <div id="txList"><div class="empty-state"><span class="ei">📋</span><p>No transactions yet</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="page" id="pageProfile">
+    <div class="prof-head">
+      <div class="avatar" id="profAv">?</div>
+      <div class="prof-meta">
+        <h3 id="profName">—</h3>
+        <p id="profUser">@—</p>
+      </div>
+    </div>
+    <div class="verify-banner" id="verifyBanner" style="display:none;">
+      <span style="font-size:20px;flex-shrink:0">⚠️</span>
+      <div class="vb-txt"><strong>Profile Incomplete</strong>Add email & mobile to unlock your Wallet.</div>
+    </div>
+    <div class="sec-title" style="font-size:16px;margin-bottom:10px;">Account Details</div>
+    <div class="info-list" style="margin-bottom:18px;">
+      <div class="info-row"><span class="ir-k">Full Name</span><span class="ir-v" id="pi-name">—</span></div>
+      <div class="info-row"><span class="ir-k">Username</span><span class="ir-v" id="pi-user">—</span></div>
+      <div class="info-row"><span class="ir-k">Email</span><span class="ir-v" id="pi-email">—</span></div>
+      <div class="info-row"><span class="ir-k">Mobile</span><span class="ir-v" id="pi-mob">—</span></div>
+      <div class="info-row"><span class="ir-k">Joined</span><span class="ir-v" id="pi-join">—</span></div>
+      <div class="info-row"><span class="ir-k">Status</span><span class="ir-v" id="pi-status">—</span></div>
+    </div>
+    <div id="contactForm" style="display:none;">
+      <div class="sec-title" style="font-size:16px;margin-bottom:10px;">Add Contact Info</div>
+      <div class="field"><label>Email Address</label><input id="pEmail" type="email" placeholder="you@email.com"></div>
+      <div class="field"><label>Mobile Number</label><input id="pMobile" type="tel" placeholder="10-digit mobile" maxlength="10"></div>
+      <button class="btn btn-green" style="margin-bottom:18px;" onclick="saveContact()">SAVE & UNLOCK WALLET</button>
+    </div>
+    <div class="sec-title" style="font-size:16px;margin-bottom:10px;">Bank Details</div>
+    <div id="bankForm">
+      <div class="field"><label>Account Holder Name</label><input id="bkHolder" placeholder="Name as per bank account"></div>
+      <div class="field"><label>Bank Name</label><input id="bkBank" placeholder="e.g. HDFC Bank"></div>
+      <div class="field"><label>Account Number</label><input id="bkAcc" placeholder="Account number"></div>
+      <div class="field"><label>IFSC Code</label><input id="bkIFSC" placeholder="e.g. HDFC0001234"></div>
+      <button class="btn btn-green" style="margin-bottom:8px;" onclick="saveBankDetails()">SAVE BANK DETAILS</button>
+      <p class="small-note">⚠️ Bank details are locked after saving. Choose carefully.</p>
+    </div>
+    <div class="info-list" id="bankDisplay" style="display:none;margin-bottom:18px;">
+      <div class="info-row"><span class="ir-k">Account Holder</span><span class="ir-v" id="bd-h">—</span></div>
+      <div class="info-row"><span class="ir-k">Bank</span><span class="ir-v" id="bd-b">—</span></div>
+      <div class="info-row"><span class="ir-k">Account No.</span><span class="ir-v" id="bd-a">—</span></div>
+      <div class="info-row"><span class="ir-k">IFSC</span><span class="ir-v" id="bd-i">—</span></div>
+    </div>
+    <div class="sec-title" style="font-size:16px;margin-bottom:10px;">My Bets</div>
+    <div id="myBets"><div class="empty-state"><span class="ei">🎯</span><p>No bets yet</p></div></div>
+    <hr class="sep">
+    <button class="btn btn-red" onclick="doLogout()">LOGOUT</button>
+    <div style="height:10px"></div>
+  </div>
+
+  <!-- SUPPORT -->
+  <div class="page" id="pageSupport">
+    <div class="sec-title">Support</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:20px;">
+      <div class="field">
+        <label>Subject</label>
+        <select id="suppSub">
+          <option value="">-- Select Subject --</option>
+          <option>Deposit Issue</option><option>Withdrawal Issue</option>
+          <option>Bank Account Detail Issue</option><option>Account Issue</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field"><label>Message</label><textarea id="suppMsg" rows="4" placeholder="Describe your issue in detail..."></textarea></div>
+      <button class="btn btn-green" onclick="submitTicket()">SUBMIT TICKET</button>
+    </div>
+    <div class="sec-title" style="font-size:16px;margin-bottom:10px;">My Tickets</div>
+    <div id="myTickets"><div class="empty-state"><span class="ei">🎫</span><p>No tickets yet</p></div></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-live" onclick="switchNav('live')"><span class="nav-icon">🏏</span><span class="nav-label">Live</span></div>
+    <div class="nav-item" id="nav-wallet" onclick="switchNav('wallet')"><span class="nav-icon">💰</span><span class="nav-label">Wallet</span></div>
+    <div class="nav-item" id="nav-profile" onclick="switchNav('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></div>
+    <div class="nav-item" id="nav-support" onclick="switchNav('support')"><span class="nav-icon">🎧</span><span class="nav-label">Support</span></div>
+  </div>
+</div>
+
+<!-- BET MODAL -->
+<div class="overlay" id="betOverlay">
+  <div class="modal">
+    <div class="modal-title">BET SLIP <span class="modal-x" onclick="closeBet()">✕</span></div>
+    <div class="brow"><span>Match</span><span id="bm-match" style="text-align:right;max-width:55%">—</span></div>
+    <div class="brow"><span>Your Pick</span><span id="bm-team" style="color:var(--green)">—</span></div>
+    <div class="brow"><span>Odds</span><span>1.95</span></div>
+    <div style="margin:14px 0;">
+      <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700;">Bet Amount (₹)</label>
+      <input id="bmAmt" type="number" min="50" placeholder="Min ₹50" class="bet-input" oninput="calcRet()">
+    </div>
+    <div class="brow"><span>Potential Win</span><span id="bmRet" class="ret-val">₹0.00</span></div>
+    <button class="btn btn-green" style="margin-top:16px;" onclick="confirmBet()">CONFIRM BET</button>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+let TOKEN = localStorage.getItem('t_tok') || '';
+let USER  = null;
+let IS_DEMO = false;
+let betCtx  = {};
+
+// ── Clock ──────────────────────────────────────────────────
+setInterval(() => {
+  const el = document.getElementById('clk');
+  if (el) el.textContent = new Date().toLocaleTimeString('en-IN');
+}, 1000);
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type ? ' t' + type : '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// ── API ────────────────────────────────────────────────────
+async function api(method, url, body) {
+  const r = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json', 'x-token': TOKEN },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  return r.json();
+}
+
+// ── Screen ─────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── Auth ───────────────────────────────────────────────────
+function switchAuth(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t, i) =>
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+  document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+  document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+}
+
+async function doRegister() {
+  const name = document.getElementById('rName').value.trim();
+  const username = document.getElementById('rUser').value.trim();
+  const password = document.getElementById('rPass').value;
+  const msg = document.getElementById('rMsg');
+  if (!name || !username || !password) { msg.className = 'msg err'; msg.textContent = 'All fields required'; return; }
+  const r = await api('POST', '/api/register', { name, username, password });
+  if (r.ok) { msg.className = 'msg ok'; msg.textContent = 'Account created! Please login.'; setTimeout(() => switchAuth('login'), 1200); }
+  else { msg.className = 'msg err'; msg.textContent = r.msg; }
+}
+
+async function doLogin() {
+  const username = document.getElementById('lUser').value.trim();
+  const password = document.getElementById('lPass').value;
+  const msg = document.getElementById('lMsg');
+  const r = await api('POST', '/api/login', { username, password });
+  if (r.ok) {
+    TOKEN = r.token; USER = r.user; IS_DEMO = r.isDemo;
+    localStorage.setItem('t_tok', TOKEN);
+    msg.className = 'msg ok'; msg.textContent = IS_DEMO ? 'Viewing as Demo...' : 'Welcome back!';
+    setTimeout(() => { showScreen('appScreen'); initApp(); }, 600);
+  } else { msg.className = 'msg err'; msg.textContent = r.msg; }
+}
+
+async function doDemo() {
+  document.getElementById('lUser').value = 'demo';
+  document.getElementById('lPass').value = 'demo';
+  await doLogin();
+}
+
+async function doLogout() {
+  await api('POST', '/api/logout');
+  TOKEN = ''; USER = null; IS_DEMO = false;
+  localStorage.removeItem('t_tok');
+  showScreen('authScreen');
+}
+
+// ── Boot ───────────────────────────────────────────────────
+async function tryAutoLogin() {
+  if (!TOKEN) return;
+  const r = await api('GET', '/api/me');
+  if (r.ok) { USER = r.user; IS_DEMO = !!USER.isDemo; showScreen('appScreen'); initApp(); }
+  else { TOKEN = ''; localStorage.removeItem('t_tok'); }
+}
+
+// ── Init ───────────────────────────────────────────────────
+function initApp() {
+  socket.emit('user:join', USER.id);
+  document.getElementById('demoBanner').style.display = IS_DEMO ? 'flex' : 'none';
+  document.getElementById('topBalWrap').style.display = IS_DEMO ? 'none' : 'block';
+  renderUserHeader();
+  loadMatches();
+  if (!IS_DEMO) { loadTransactions(); loadBets(); loadTickets(); loadWagerStatus(); }
+  switchNav('live');
+}
+
+function renderUserHeader() {
+  if (!USER) return;
+  const u = USER;
+  document.getElementById('topBal').textContent = (u.balance || 0).toFixed(2);
+  document.getElementById('profAv').textContent  = IS_DEMO ? '👀' : u.name[0].toUpperCase();
+  document.getElementById('profName').textContent = IS_DEMO ? 'Demo User' : u.name;
+  document.getElementById('profUser').textContent = IS_DEMO ? '@demo' : '@' + u.username;
+  document.getElementById('pi-name').textContent  = IS_DEMO ? 'Demo User' : u.name;
+  document.getElementById('pi-user').textContent  = IS_DEMO ? 'demo' : u.username;
+  document.getElementById('pi-email').textContent = IS_DEMO ? '—' : (u.email || 'Not set');
+  document.getElementById('pi-mob').textContent   = IS_DEMO ? '—' : (u.mobile || 'Not set');
+  document.getElementById('pi-join').textContent  = u.joined || '—';
+  document.getElementById('pi-status').innerHTML  = IS_DEMO
+    ? '<span class="chip cgo">Demo</span>'
+    : (u.blocked ? '<span class="chip cr">Blocked</span>' : '<span class="chip cg">Active</span>');
+  if (!IS_DEMO) {
+    const needsContact = !u.email || !u.mobile;
+    document.getElementById('verifyBanner').style.display = needsContact ? 'flex' : 'none';
+    document.getElementById('contactForm').style.display  = needsContact ? 'block' : 'none';
+    if (u.bankSaved) {
+      document.getElementById('bankForm').style.display    = 'none';
+      document.getElementById('bankDisplay').style.display = 'block';
+      document.getElementById('bd-h').textContent = u.bankDetails.holder;
+      document.getElementById('bd-b').textContent = u.bankDetails.bank;
+      document.getElementById('bd-a').textContent = u.bankDetails.acc;
+      document.getElementById('bd-i').textContent = u.bankDetails.ifsc;
+      document.getElementById('wBankInfo').innerHTML = `<strong>Withdrawal to:</strong><br>${u.bankDetails.holder} • ${u.bankDetails.bank}<br>${u.bankDetails.acc} • ${u.bankDetails.ifsc}`;
+    } else {
+      document.getElementById('bankForm').style.display    = 'block';
+      document.getElementById('bankDisplay').style.display = 'none';
+    }
+  }
+}
+
+// ── Nav ────────────────────────────────────────────────────
+function switchNav(page) {
+  ['live','wallet','profile','support'].forEach(p => {
+    const pg = document.getElementById('page' + p[0].toUpperCase() + p.slice(1));
+    if (pg) pg.classList.toggle('active', p === page);
+    const ni = document.getElementById('nav-' + p);
+    if (ni) ni.classList.toggle('active', p === page);
+  });
+  if (page === 'wallet') renderWallet();
+  if (page === 'profile') { renderUserHeader(); if (!IS_DEMO) loadBets(); }
+  if (page === 'support' && !IS_DEMO) loadTickets();
+}
+
+// ── Matches ────────────────────────────────────────────────
+async function loadMatches() {
+  const r = await api('GET', '/api/matches');
+  if (r.ok) renderMatches(r.matches);
+}
+
+function renderMatches(matches) {
+  const list = document.getElementById('matchList');
+  if (!matches || !matches.length) {
+    list.innerHTML = '<div class="empty-state"><span class="ei">🏏</span><p>No live matches at the moment</p></div>';
+    return;
+  }
+  list.innerHTML = matches.map(m => `
+    <div class="match-card">
+      <div class="match-head">
+        <span class="live-pill"><span class="ldot"></span> LIVE</span>
+        <span class="match-time">⏰ ${m.time || 'TBD'}</span>
+      </div>
+      <div class="teams-row">
+        <div class="team-side">
+          <div class="team-logo-wrap">
+            ${m.logo1 ? `<img src="${m.logo1}" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">` : '<span class="emoji">🏏</span>'}
+          </div>
+          <div class="team-name">${m.teamA}</div>
+        </div>
+        <div class="vs-chip">VS</div>
+        <div class="team-side">
+          <div class="team-logo-wrap">
+            ${m.logo2 ? `<img src="${m.logo2}" onerror="this.parentNode.innerHTML='<span class=emoji>🏏</span>'">` : '<span class="emoji">🏏</span>'}
+          </div>
+          <div class="team-name">${m.teamB}</div>
+        </div>
+      </div>
+      <div class="odds-row">
+        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamA}','${m.teamA} vs ${m.teamB}')">
+          <span class="odds-lbl">${m.teamA}</span>
+          <span class="odds-val">1.95</span>
+        </div>
+        <div class="odds-btn" onclick="openBet('${m.id}','${m.teamB}','${m.teamA} vs ${m.teamB}')">
+          <span class="odds-lbl">${m.teamB}</span>
+          <span class="odds-val">1.95</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Bet ────────────────────────────────────────────────────
+function openBet(matchId, team, match) {
+  if (IS_DEMO) { toast('Register to place bets!', 'go'); return; }
+  betCtx = { matchId, team, match };
+  document.getElementById('bm-match').textContent = match;
+  document.getElementById('bm-team').textContent  = team;
+  document.getElementById('bmAmt').value = '';
+  document.getElementById('bmRet').textContent = '₹0.00';
+  document.getElementById('betOverlay').classList.add('open');
+}
+function closeBet() { document.getElementById('betOverlay').classList.remove('open'); }
+function calcRet() {
+  const a = parseFloat(document.getElementById('bmAmt').value) || 0;
+  document.getElementById('bmRet').textContent = '₹' + (a * 1.95).toFixed(2);
+}
+
+async function confirmBet() {
+  const amount = parseFloat(document.getElementById('bmAmt').value) || 0;
+  if (amount < 50) { toast('Minimum bet is ₹50', 'r'); return; }
+  const r = await api('POST', '/api/bet', { matchId: betCtx.matchId, team: betCtx.team, amount });
+  if (r.ok) {
+    USER.balance = r.balance;
+    document.getElementById('topBal').textContent = r.balance.toFixed(2);
+    closeBet();
+    toast(`Bet placed! ₹${amount} on ${betCtx.team}`, 'g');
+    loadBets();
+  } else toast(r.msg, 'r');
+}
+
+// ── Wallet ─────────────────────────────────────────────────
+function renderWallet() {
+  if (!USER) return;
+  if (IS_DEMO) {
+    document.getElementById('wLocked').style.display = 'block';
+    document.getElementById('wOpen').style.display   = 'none';
+    document.getElementById('wLocked').querySelector('p').textContent = 'Demo users cannot use the Wallet. Please register.';
+    return;
+  }
+  const locked = !USER.email || !USER.mobile;
+  document.getElementById('wLocked').style.display = locked ? 'block' : 'none';
+  document.getElementById('wOpen').style.display   = locked ? 'none'  : 'block';
+  if (!locked) {
+    document.getElementById('wBal').textContent = (USER.balance || 0).toFixed(2);
+    loadTransactions();
+    loadWagerStatus();
+  }
+}
+
+function switchWTab(tab, el) {
+  document.querySelectorAll('.wtab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.wtab-c').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('wt-' + tab).classList.add('active');
+  if (tab === 'history') loadTransactions();
+  if (tab === 'withdraw') loadWagerStatus();
+}
+
+async function loadWagerStatus() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/wager-status');
+  if (!r.ok) return;
+  const pct = r.totalDeposited > 0 ? Math.min(100, (r.wagered / r.required) * 100) : 0;
+  document.getElementById('wagerFill').style.width = pct.toFixed(0) + '%';
+  document.getElementById('wagerPct').textContent  = pct.toFixed(0) + '%';
+  document.getElementById('wagerNote').textContent = `Wagered ₹${r.wagered.toFixed(0)} of ₹${r.required.toFixed(0)} required`;
+  const statusEl = document.getElementById('wagerStatus');
+  if (statusEl) {
+    statusEl.innerHTML = `<strong style="color:var(--gold)">Wager Requirement (70% of deposits):</strong><br>
+      Deposited: ₹${r.totalDeposited.toFixed(0)} &nbsp;|&nbsp; Required wager: ₹${r.required.toFixed(0)}<br>
+      Wagered so far: ₹${r.wagered.toFixed(0)} &nbsp;
+      ${r.ok ? '<span class="chip cg">✓ ELIGIBLE</span>' : '<span class="chip cr">⚠ LOCKED</span>'}`;
+  }
+}
+
+let uploadedFile = null;
+function handleFile(input) {
+  if (input.files[0]) {
+    uploadedFile = input.files[0];
+    document.getElementById('fileLbl').innerHTML = '<span>✅</span>' + input.files[0].name;
+  }
+}
+
+async function submitDeposit() {
+  const utr = document.getElementById('utrInput').value.trim();
+  const amt = parseFloat(document.getElementById('depAmt').value) || 0;
+  if (!utr || utr.length < 10) { toast('Enter valid UTR (min 10 digits)', 'r'); return; }
+  if (amt < 300) { toast('Minimum deposit is ₹300', 'r'); return; }
+  const r = await api('POST', '/api/deposit', { utr, amount: amt });
+  if (r.ok) {
+    toast('Deposit request submitted! ✓', 'g');
+    document.getElementById('utrInput').value = '';
+    document.getElementById('depAmt').value   = '';
+    uploadedFile = null;
+    document.getElementById('fileLbl').innerHTML = '<span>📷</span>Tap to upload screenshot';
+    loadTransactions();
+  } else toast(r.msg, 'r');
+}
+
+async function submitWithdraw() {
+  const amt = parseFloat(document.getElementById('withAmt').value) || 0;
+  const r = await api('POST', '/api/withdraw', { amount: amt });
+  if (r.ok) {
+    USER.balance = r.balance;
+    document.getElementById('topBal').textContent = r.balance.toFixed(2);
+    document.getElementById('wBal').textContent   = r.balance.toFixed(2);
+    toast('Withdrawal request submitted!', 'g');
+    document.getElementById('withAmt').value = '';
+    loadTransactions(); loadWagerStatus();
+  } else toast(r.msg, 'r');
+}
+
+async function loadTransactions() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/transactions');
+  if (!r.ok) return;
+  const list = document.getElementById('txList');
+  if (!r.transactions.length) {
+    list.innerHTML = '<div class="empty-state"><span class="ei">📋</span><p>No transactions yet</p></div>';
+    return;
+  }
+  list.innerHTML = r.transactions.map(t => `
+    <div class="tx-card">
+      <div class="tx-left">
+        <div class="tl-type">${t.type}</div>
+        <div class="tl-time">${t.time}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tr-amt" style="color:${['Deposit','Admin Credit'].includes(t.type)?'var(--green)':'var(--red)'}">
+          ${['Deposit','Admin Credit'].includes(t.type)?'+':'-'}₹${t.amount.toFixed(2)}
+        </div>
+        <div style="text-align:right;margin-top:3px;">
+          <span class="chip ${t.status==='Approved'?'cg':t.status==='Rejected'?'cr':'cgo'}">${t.status}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Profile ────────────────────────────────────────────────
+async function saveContact() {
+  const email  = document.getElementById('pEmail').value.trim();
+  const mobile = document.getElementById('pMobile').value.trim();
+  if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) { toast('Enter a valid email', 'r'); return; }
+  if (!mobile || mobile.length !== 10) { toast('Enter 10-digit mobile', 'r'); return; }
+  const r = await api('POST', '/api/contact', { email, mobile });
+  if (r.ok) { USER = r.user; renderUserHeader(); renderWallet(); toast('Contact saved! Wallet unlocked 🎉', 'g'); }
+  else toast(r.msg, 'r');
+}
+
+async function saveBankDetails() {
+  const holder = document.getElementById('bkHolder').value.trim();
+  const bank   = document.getElementById('bkBank').value.trim();
+  const acc    = document.getElementById('bkAcc').value.trim();
+  const ifsc   = document.getElementById('bkIFSC').value.trim();
+  if (!holder || !bank || !acc || !ifsc) { toast('All bank fields required', 'r'); return; }
+  const r = await api('POST', '/api/bank', { holder, bank, acc, ifsc });
+  if (r.ok) { USER = r.user; renderUserHeader(); toast('Bank details saved & locked!', 'g'); }
+  else toast(r.msg, 'r');
+}
+
+async function loadBets() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/bets');
+  if (!r.ok) return;
+  const list = document.getElementById('myBets');
+  if (!r.bets.length) { list.innerHTML = '<div class="empty-state"><span class="ei">🎯</span><p>No bets yet</p></div>'; return; }
+  list.innerHTML = r.bets.slice(0, 20).map(b => `
+    <div class="bet-card">
+      <div class="bc-top">
+        <div class="bc-match">${b.match}</div>
+        <div class="bc-amt">₹${parseFloat(b.amount).toFixed(2)}</div>
+      </div>
+      <div class="bc-bot">
+        <span class="bc-team">🎯 ${b.team}</span>
+        <span class="chip ${b.status==='Won'?'cg':b.status==='Lost'?'cr':b.status==='Void'?'cgo':'cgo'}">${b.status}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">${b.time} • Potential: ₹${b.potential}</div>
+    </div>`).join('');
+}
+
+// ── Support ────────────────────────────────────────────────
+async function submitTicket() {
+  if (IS_DEMO) { toast('Register to create tickets', 'go'); return; }
+  const subject = document.getElementById('suppSub').value;
+  const message = document.getElementById('suppMsg').value.trim();
+  if (!subject) { toast('Select a subject', 'r'); return; }
+  if (!message || message.length < 5) { toast('Write a proper message', 'r'); return; }
+  const r = await api('POST', '/api/ticket', { subject, message });
+  if (r.ok) {
+    toast('Ticket #' + r.ticket.id + ' submitted!', 'g');
+    document.getElementById('suppSub').value = '';
+    document.getElementById('suppMsg').value = '';
+    loadTickets();
+  } else toast(r.msg, 'r');
+}
+
+async function loadTickets() {
+  if (IS_DEMO) return;
+  const r = await api('GET', '/api/tickets');
+  if (!r.ok) return;
+  const list = document.getElementById('myTickets');
+  if (!r.tickets.length) { list.innerHTML = '<div class="empty-state"><span class="ei">🎫</span><p>No tickets yet</p></div>'; return; }
+  list.innerHTML = r.tickets.map(t => `
+    <div class="ticket-card">
+      <div class="tk-top">
+        <div><div class="tk-id">#${t.id}</div><div class="tk-subj">${t.subject}</div></div>
+        <span class="chip ${t.status==='Closed'?'cr':t.status==='Replied'?'cg':'cgo'}">${t.status}</span>
+      </div>
+      <div class="tk-msg">${t.message}</div>
+      ${t.reply ? `<div class="tk-reply"><small>🎧 Admin Reply</small>${t.reply}</div>` : ''}
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">${t.time}</div>
+    </div>`).join('');
+}
+
+// ── Result Popup ───────────────────────────────────────────
+function showResult(emoji, title, body) {
+  document.getElementById('rEmoji').textContent = emoji;
+  document.getElementById('rTitle').textContent = title;
+  document.getElementById('rBody').textContent  = body;
+  document.getElementById('resultPop').classList.add('open');
+}
+function closeResult() { document.getElementById('resultPop').classList.remove('open'); }
+
+// ── Socket real-time events ────────────────────────────────
+socket.on('balance:update', ({ balance }) => {
+  if (!USER) return;
+  USER.balance = balance;
+  document.getElementById('topBal').textContent = balance.toFixed(2);
+  document.getElementById('wBal').textContent   = balance.toFixed(2);
+  loadWagerStatus();
+});
+socket.on('matches:update', ({ matches }) => renderMatches(matches));
+socket.on('bets:settled', ({ betId, result, balance }) => {
+  if (!USER) return;
+  USER.balance = balance;
+  document.getElementById('topBal').textContent = balance.toFixed(2);
+  loadBets();
+  const emoji = result === 'Won' ? '🎉' : result === 'Void' ? '↩️' : '😔';
+  const title = result === 'Won' ? 'YOU WON!' : result === 'Void' ? 'BET VOIDED' : 'BET LOST';
+  const body  = result === 'Won' ? `Winnings credited! New balance: ₹${balance.toFixed(2)}`
+    : result === 'Void' ? `Stake refunded. Balance: ₹${balance.toFixed(2)}`
+    : `Better luck next time! Balance: ₹${balance.toFixed(2)}`;
+  showResult(emoji, title, body);
+});
+socket.on('match:result', ({ match, team, result }) => {
+  if (IS_DEMO) toast(`Result: ${match} – ${result}`, 'go');
+});
+socket.on('tx:update', ({ transactions }) => {
+  if (USER) { USER.transactions = transactions; loadTransactions(); }
+});
+socket.on('ticket:update', ({ id, reply, status }) => {
+  loadTickets();
+  toast('Support ticket updated', 'g');
+});
+socket.on('account:blocked', ({ blocked }) => {
+  if (blocked) { toast('Your account has been blocked.', 'r'); setTimeout(doLogout, 2000); }
+});
+
+// ── Boot ───────────────────────────────────────────────────
+tryAutoLogin();
+</script>
+</body>
+</html>
