@@ -38,13 +38,14 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
   background: radial-gradient(ellipse at 30% 0%, #0a2e14 0%, var(--bg) 55%),
               radial-gradient(ellipse at 80% 100%, #0d1f3c 0%, transparent 50%);
   flex-direction: column; align-items: center; justify-content: center; padding: 20px;
+  position: relative; z-index: 10;
 }
 #authScreen.active { display: flex;
 }
 .logo-block { text-align: center; margin-bottom: 28px; }
 .logo-block img { width: 200px; max-width: 70vw; filter: drop-shadow(0 0 20px rgba(46,204,64,.35)); }
 .logo-block p { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
-.auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.5); position: relative; z-index: 10; }
 .auth-tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 22px; gap: 4px; }
 .auth-tab { flex: 1; padding: 9px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--muted); transition: all .2s; border: none; background: transparent; font-family: inherit; }
 .auth-tab.active { background: var(--green); color: #000; }
@@ -248,23 +249,23 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
   </div>
   <div class="auth-card">
     <div class="auth-tabs">
-      <button type="button" class="auth-tab active" onclick="switchAuth('login')">Login</button>
-      <button type="button" class="auth-tab" onclick="switchAuth('register')">Register</button>
+      <button type="button" class="auth-tab active" id="tabLogin" onclick="switchAuth('login')">Login</button>
+      <button type="button" class="auth-tab" id="tabRegister" onclick="switchAuth('register')">Register</button>
     </div>
     <!-- LOGIN -->
     <div class="auth-form active" id="loginForm">
       <div class="field"><label>Username</label><input id="lUser" placeholder="Your username" autocomplete="username"></div>
       <div class="field"><label>Password</label><input id="lPass" type="password" placeholder="Your password" autocomplete="current-password"></div>
-      <button class="btn btn-green" onclick="doLogin()">LOGIN</button>
+      <button type="button" class="btn btn-green" id="loginBtn" onclick="doLogin()">LOGIN</button>
       <div id="lMsg" class="msg"></div>
-      <button type="button" class="demo-btn" onclick="doDemo()">👀 Try Demo <span class="demo-badge">VIEW ONLY</span></button>
+      <button type="button" class="demo-btn" id="demoBtn" onclick="doDemo()">👀 Try Demo <span class="demo-badge">VIEW ONLY</span></button>
     </div>
     <!-- REGISTER -->
     <div class="auth-form" id="registerForm">
       <div class="field"><label>Full Name</label><input id="rName" placeholder="Your full name"></div>
       <div class="field"><label>Username</label><input id="rUser" placeholder="Choose a username"></div>
       <div class="field"><label>Password</label><input id="rPass" type="password" placeholder="Create password"></div>
-      <button class="btn btn-green" onclick="doRegister()">CREATE ACCOUNT</button>
+      <button type="button" class="btn btn-green" id="registerBtn" onclick="doRegister()">CREATE ACCOUNT</button>
       <div id="rMsg" class="msg"></div>
     </div>
   </div>
@@ -472,7 +473,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io();
+let socket;
+try { socket = io(); } catch(e) { socket = { emit: ()=>{}, on: ()=>{} }; }
 let TOKEN = localStorage.getItem('t_tok') || '';
 let USER  = null;
 let IS_DEMO = false;
@@ -1029,6 +1031,20 @@ socket.on('deposit-account:updated', ({ account }) => updateDepositAccountUI(acc
 loadDepositAccount();
 
 // ── Boot ───────────────────────────────────────────────────
+// ── Guaranteed button bindings (backup for onclick) ──────
+document.addEventListener('DOMContentLoaded', function() {
+  var tb = document.getElementById('tabRegister');
+  if (tb) tb.addEventListener('click', function() { switchAuth('register'); });
+  var tl = document.getElementById('tabLogin');
+  if (tl) tl.addEventListener('click', function() { switchAuth('login'); });
+  var db = document.getElementById('demoBtn');
+  if (db) db.addEventListener('click', function() { doDemo(); });
+  var lb = document.getElementById('loginBtn');
+  if (lb) lb.addEventListener('click', function() { doLogin(); });
+  var rb = document.getElementById('registerBtn');
+  if (rb) rb.addEventListener('click', function() { doRegister(); });
+});
+
 tryAutoLogin();
 </script>
 </body>
