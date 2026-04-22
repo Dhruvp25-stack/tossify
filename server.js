@@ -18,6 +18,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Static: user frontend (public) ───────────────────────────
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // ─── HIDDEN Admin panel – secret URL only ─────────────────────
 const ADMIN_PATH = '/panel25';          // ← change this secret!
