@@ -2,9 +2,8 @@ name: Tossify Match Scraper
 
 on:
   schedule:
-    # 1:00 AM IST = 7:30 PM UTC (previous day)
-    - cron: '30 19 * * *'
-  workflow_dispatch:   # allow manual trigger
+    - cron: '*/15 * * * *'   # every 15 minutes
+  workflow_dispatch:           # manual trigger button in GitHub Actions tab
 
 jobs:
   scrape:
