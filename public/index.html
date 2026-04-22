@@ -46,7 +46,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .logo-block p { color: var(--muted); font-size: 13px; margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
 .auth-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 28px 24px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
 .auth-tabs { display: flex; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 22px; gap: 4px; }
-.auth-tab { flex: 1; padding: 9px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--muted); transition: all .2s; }
+.auth-tab { flex: 1; padding: 9px; text-align: center; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 700; color: var(--muted); transition: all .2s; border: none; background: transparent; font-family: inherit; }
 .auth-tab.active { background: var(--green); color: #000; }
 .auth-form { display: none; } .auth-form.active { display: block; }
 
@@ -70,7 +70,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
 .msg { font-size: 13px; text-align: center; padding: 9px 12px; border-radius: 8px; margin-top: 10px; display: none; font-weight: 600; }
 .msg.ok  { background: rgba(46,204,64,.12); color: var(--green); display: block; }
 .msg.err { background: rgba(231,76,60,.12);  color: var(--red);   display: block; }
-.demo-btn { margin-top: 14px; background: rgba(255,255,255,.04); border: 1.5px dashed var(--border); color: var(--muted); border-radius: 10px; padding: 11px; cursor: pointer; font-size: 13px; font-weight: 700; text-align: center; transition: all .2s; letter-spacing: .5px; }
+.demo-btn { margin-top: 14px; background: rgba(255,255,255,.04); border: 1.5px dashed var(--border); color: var(--muted); border-radius: 10px; padding: 11px; cursor: pointer; font-size: 13px; font-weight: 700; text-align: center; transition: all .2s; letter-spacing: .5px;  font-family: inherit; }
 .demo-btn:hover { border-color: var(--green); color: var(--green); }
 .demo-badge { display: inline-block; background: rgba(240,192,64,.15); color: var(--gold); font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 800; letter-spacing: .5px; vertical-align: middle; margin-left: 6px; }
 
@@ -248,8 +248,8 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
   </div>
   <div class="auth-card">
     <div class="auth-tabs">
-      <div class="auth-tab active" onclick="switchAuth('login')">Login</div>
-      <div class="auth-tab" onclick="switchAuth('register')">Register</div>
+      <button type="button" class="auth-tab active" onclick="switchAuth('login')">Login</button>
+      <button type="button" class="auth-tab" onclick="switchAuth('register')">Register</button>
     </div>
     <!-- LOGIN -->
     <div class="auth-form active" id="loginForm">
@@ -257,7 +257,7 @@ body { font-family: 'Nunito', sans-serif; background: var(--bg); color: var(--te
       <div class="field"><label>Password</label><input id="lPass" type="password" placeholder="Your password" autocomplete="current-password"></div>
       <button class="btn btn-green" onclick="doLogin()">LOGIN</button>
       <div id="lMsg" class="msg"></div>
-      <div class="demo-btn" onclick="doDemo()">👀 Try Demo <span class="demo-badge">VIEW ONLY</span></div>
+      <button type="button" class="demo-btn" onclick="doDemo()">👀 Try Demo <span class="demo-badge">VIEW ONLY</span></button>
     </div>
     <!-- REGISTER -->
     <div class="auth-form" id="registerForm">
