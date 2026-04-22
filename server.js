@@ -596,7 +596,8 @@ app.post('/api/admin/ticket/close', adminAuth, (req, res) => {
 // ── Scraper push ──────────────────────────────────────────────
 app.post('/api/scraper/push', (req, res) => {
   const secret = req.headers['x-scraper-key'];
-  if (secret !== 'my_new_scraper') return res.status(403).json({ ok: false });
+  const validSecret = process.env.SCRAPER_SECRET || 'my_new_scraper';
+  if (secret !== validSecret) return res.status(403).json({ ok: false });
   try {
     const rawMatches = req.body.matches || [];
     inMemoryMatches = rawMatches.map(m => {
