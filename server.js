@@ -65,20 +65,23 @@ if (!DB.settledMatches) DB.settledMatches = {};
 // ─── In-memory scraped matches ────────────────────────────────
 let inMemoryMatches = [];
 
-// ─── Parse a "time" string into a Date for today ──────────────
-// Supports: "7:30 PM", "19:30", "22 Apr 06:55 PM", "22 Apr 2025 7:30 PM"
+// ─── Parse a "time" string into a Date (IST-aware) ────────────
+// Supports: "7:30 PM", "19:30", "23 Apr 08:25 AM", "22 Apr 2025 7:30 PM"
+// All times from scraper are in IST (UTC+5:30). Render runs UTC.
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // 5h30m in ms
+
+function nowIST() {
+  return new Date(Date.now() + IST_OFFSET_MS);
+}
+
 function parseMatchTime(timeStr) {
   if (!timeStr || timeStr === 'TBD') return null;
   try {
     const s = timeStr.trim();
-    const now = new Date();
+    const now = nowIST(); // Use IST "now" for comparison base
 
-    // Full ISO or parseable date
-    const d = new Date(s);
-    if (!isNaN(d.getTime()) && d.getFullYear() > 2000) return d;
-
-    // "22 Apr 06:55 PM" or "22 Apr 7:30 PM"
-    const withDate = s.match(/(\d{1,2})\s+([A-Za-z]{3})\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    // "23 Apr 08:25 AM" or "22 Apr 7:30 PM" (with optional year)
+    const withDate = s.match(/(\d{1,2})\s+([A-Za-z]{3})(?:\s+\d{4})?\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
     if (withDate) {
       const day   = parseInt(withDate[1]);
       const month = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
@@ -88,11 +91,13 @@ function parseMatchTime(timeStr) {
       const p = withDate[5] ? withDate[5].toUpperCase() : null;
       if (p === 'PM' && h < 12) h += 12;
       if (p === 'AM' && h === 12) h = 0;
-      const dt = new Date(now.getFullYear(), month >= 0 ? month : now.getMonth(), day, h, m, 0, 0);
+      // Build as IST time then convert to UTC for JS Date comparison
+      const istMs = Date.UTC(now.getFullYear(), month >= 0 ? month : now.getMonth(), day, h, m, 0) - IST_OFFSET_MS;
+      const dt = new Date(istMs);
       return isNaN(dt.getTime()) ? null : dt;
     }
 
-    // "7:30 PM" or "19:30"
+    // "7:30 PM" or "08:25 AM" or "19:30" — time only, assume today IST
     const timeOnly = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
     if (timeOnly) {
       let h = parseInt(timeOnly[1]);
@@ -100,7 +105,8 @@ function parseMatchTime(timeStr) {
       const p = timeOnly[3] ? timeOnly[3].toUpperCase() : null;
       if (p === 'PM' && h < 12) h += 12;
       if (p === 'AM' && h === 12) h = 0;
-      const dt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0, 0);
+      const istMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0) - IST_OFFSET_MS;
+      const dt = new Date(istMs);
       return isNaN(dt.getTime()) ? null : dt;
     }
   } catch(e) {}
