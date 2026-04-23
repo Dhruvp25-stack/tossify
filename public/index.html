@@ -675,7 +675,7 @@ function renderMatches(matches) {
         "</div>"
       : "<div style=\"text-align:center;padding:10px 0;font-size:13px;color:var(--muted);\">🔒 Betting is closed for this match</div>";
     return "<div class=\"match-card\" style=\"" + (isOpen ? "" : "opacity:0.75;") + "\">" +
-      "<div class=\"match-head\">" + statusBadge + "<span class=\"match-time\">⏰ " + timeLabel + "</span></div>" +
+      "<div class=\"match-head\">" + statusBadge + "<span class=\"match-time\">⏰ Bet Closing: " + timeLabel + "</span></div>" +
       "<div class=\"teams-row\">" +
         "<div class=\"team-side\"><div class=\"team-logo-wrap\">" + logo1Html + "</div><div class=\"team-name\">" + m.teamA + "</div></div>" +
         "<div class=\"vs-chip\">VS</div>" +
@@ -687,24 +687,49 @@ function renderMatches(matches) {
 }
 
 // ── Bet ────────────────────────────────────────────────────
+function parseClosingTime(timeStr) {
+  // Parses "23 Apr 08:25 AM" or "7:30 PM" as IST and returns a JS Date (UTC internally)
+  if (!timeStr || timeStr === 'TBD') return null;
+  const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+  const s = timeStr.trim();
+  // "23 Apr 08:25 AM" format
+  const withDate = s.match(/(\d{1,2})\s+([A-Za-z]{3})(?:\s+\d{4})?\s+(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (withDate) {
+    const months = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+    const day = parseInt(withDate[1]);
+    const month = months[withDate[2].toLowerCase()];
+    let h = parseInt(withDate[3]);
+    const m = parseInt(withDate[4]);
+    const p = withDate[5] ? withDate[5].toUpperCase() : null;
+    if (p === 'PM' && h < 12) h += 12;
+    if (p === 'AM' && h === 12) h = 0;
+    const year = new Date().getFullYear();
+    // Build as IST → convert to UTC
+    return new Date(Date.UTC(year, month, day, h, m, 0) - IST_OFFSET);
+  }
+  // "7:30 PM" or "08:25 AM" time-only → use today in IST
+  const timeOnly = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (timeOnly) {
+    let h = parseInt(timeOnly[1]);
+    const m = parseInt(timeOnly[2]);
+    const p = timeOnly[3] ? timeOnly[3].toUpperCase() : null;
+    if (p === 'PM' && h < 12) h += 12;
+    if (p === 'AM' && h === 12) h = 0;
+    const now = new Date();
+    const nowIST = new Date(now.getTime() + 5.5*60*60*1000);
+    return new Date(Date.UTC(nowIST.getUTCFullYear(), nowIST.getUTCMonth(), nowIST.getUTCDate(), h, m, 0) - 5.5*60*60*1000);
+  }
+  return null;
+}
+
 function openBet(matchId, team, match, closingTime) {
   if (IS_DEMO) { toast('Register to place bets!', 'go'); return; }
-  // ─ Client-side closing time check ─
+  // ─ Client-side closing time check (IST-aware) ─
   if (closingTime && closingTime !== 'TBD') {
-    const timeMatch = closingTime.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
-    if (timeMatch) {
-      let hours = parseInt(timeMatch[1]);
-      const mins = parseInt(timeMatch[2]);
-      const period = timeMatch[3] ? timeMatch[3].toUpperCase() : null;
-      if (period === 'PM' && hours < 12) hours += 12;
-      if (period === 'AM' && hours === 12) hours = 0;
-      const now = new Date();
-      const closing = new Date(now);
-      closing.setHours(hours, mins, 0, 0);
-      if (now > closing) {
-        toast('Bet Closing Time has passed! No more bets for this match.', 'r');
-        return;
-      }
+    const closing = parseClosingTime(closingTime);
+    if (closing && new Date() > closing) {
+      toast('Bet Closing Time has passed! No more bets for this match.', 'r');
+      return;
     }
   }
   betCtx = { matchId, team, match };
