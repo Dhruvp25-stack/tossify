@@ -123,7 +123,7 @@ function isBettingOpen(match) {
 }
 
 // ─── Matches: merge in-memory + file + admin-added ────────────
-function getLiveMatches() {
+function buildAllMatches() {
   let scraped = [];
   try {
     if (inMemoryMatches.length > 0) {
@@ -151,12 +151,21 @@ function getLiveMatches() {
     const key = `${m.teamA}|${m.teamB}`;
     if (!seen.has(key)) { seen.add(key); merged.push(m); }
   });
-  // Attach bettingOpen flag and settled info
   return merged.map(m => ({
     ...m,
     bettingOpen: isBettingOpen(m),
     settled: DB.settledMatches[m.id] || null
   }));
+}
+
+// Admin sees ALL matches (settled + unsettled)
+function getLiveMatchesAdmin() {
+  return buildAllMatches();
+}
+
+// Users ONLY see unsettled matches — settled never reappear
+function getLiveMatches() {
+  return buildAllMatches().filter(m => !DB.settledMatches[m.id]);
 }
 
 // ─── Cron: auto-close betting when time passes ────────────────
@@ -259,12 +268,9 @@ app.post('/api/bank', auth, demoBlock, (req, res) => {
   res.json({ ok: true, user: pub(req.user) });
 });
 
-// Get live matches — only show unsettled ones to users
+// Get live matches — only show unsettled ones to users (getLiveMatches already filters settled)
 app.get('/api/matches', (req, res) => {
-  const all = getLiveMatches();
-  // Users only see matches that haven't been settled/cancelled
-  const visible = all.filter(m => !DB.settledMatches[m.id]);
-  res.json({ ok: true, matches: visible });
+  res.json({ ok: true, matches: getLiveMatches() });
 });
 
 app.get('/api/deposit-account', (req, res) => res.json({ ok: true, account: depositAccount }));
@@ -397,7 +403,7 @@ app.get('/api/admin/data', adminAuth, (req, res) => {
     ok: true,
     users: DB.users.map(pub),
     adminMatches: DB.adminMatches || [],
-    allMatches: getLiveMatches(),   // includes settled flag
+    allMatches: getLiveMatchesAdmin(), // admin sees ALL including settled
     bets: DB.bets,
     deposits: DB.deposits,
     withdrawals: DB.withdrawals,
