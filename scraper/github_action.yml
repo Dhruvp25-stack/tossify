@@ -2,14 +2,13 @@ name: Tossify Match Scraper
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # every 15 minutes
-  workflow_dispatch:           # manual trigger button in GitHub Actions tab
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
       - uses: actions/checkout@v4
 
@@ -24,15 +23,15 @@ jobs:
           playwright install chromium
           playwright install-deps chromium
 
-      - name: Run scraper (single-shot)
+      - name: Run scraper
         env:
           NODE_SERVER_URL: ${{ secrets.NODE_SERVER_URL }}
-          SCRAPER_SECRET:  ${{ secrets.SCRAPER_SECRET }}
+          SCRAPER_SECRET: ${{ secrets.SCRAPER_SECRET }}
         run: |
           cd scraper
           python scraper_once.py
 
-      - name: Upload matches JSON as artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: live_matches
