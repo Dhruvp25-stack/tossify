@@ -602,8 +602,9 @@ app.post('/api/admin/match/settle', adminAuth, (req, res) => {
 
   saveDB();
 
-  // Notify all clients
-  io.emit('matches:update', { matches: getLiveMatches() });
+  // Notify all clients — users get filtered, admin gets all
+  io.emit('matches:update',       { matches: getLiveMatches() });
+  io.emit('matches:admin:update', { matches: getLiveMatchesAdmin() });
   io.to('admin').emit('db:bets', DB.bets);
   io.emit('match:result', {
     matchId, action,
@@ -626,7 +627,8 @@ app.post('/api/admin/match/add', adminAuth, (req, res) => {
     time: time || 'TBD', source:'admin', active: true
   };
   DB.adminMatches.unshift(m); saveDB();
-  io.emit('matches:update', { matches: getLiveMatches() });
+  io.emit('matches:update',       { matches: getLiveMatches() });
+  io.emit('matches:admin:update', { matches: getLiveMatchesAdmin() });
   res.json({ ok: true, match: m });
 });
 
@@ -634,14 +636,16 @@ app.post('/api/admin/match/toggle', adminAuth, (req, res) => {
   const m = (DB.adminMatches||[]).find(x => x.id === req.body.id);
   if (!m) return res.json({ ok: false });
   m.active = !m.active; saveDB();
-  io.emit('matches:update', { matches: getLiveMatches() });
+  io.emit('matches:update',       { matches: getLiveMatches() });
+  io.emit('matches:admin:update', { matches: getLiveMatchesAdmin() });
   res.json({ ok: true, active: m.active });
 });
 
 app.post('/api/admin/match/delete', adminAuth, (req, res) => {
   DB.adminMatches = (DB.adminMatches||[]).filter(x => x.id !== req.body.id);
   saveDB();
-  io.emit('matches:update', { matches: getLiveMatches() });
+  io.emit('matches:update',       { matches: getLiveMatches() });
+  io.emit('matches:admin:update', { matches: getLiveMatchesAdmin() });
   res.json({ ok: true });
 });
 
