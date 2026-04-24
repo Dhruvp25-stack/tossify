@@ -60,13 +60,20 @@ function saveDB() {
   try { fs.writeFileSync(DB_FILE, JSON.stringify(DB, null, 2)); } catch(e) {}
 }
 let DB = loadDB();
-if (!DB.settledMatches) DB.settledMatches = {};
+if (!DB.settledMatches)  DB.settledMatches  = {};
+if (!DB.scrapedMatches)  DB.scrapedMatches  = {};
+if (!Array.isArray(DB.scrapedMatches)) DB.scrapedMatches = [];
 
 // ─── Maintenance mode ─────────────────────────────────────────
 let maintenanceMode = false;
 
 // ─── In-memory scraped matches ────────────────────────────────
 let inMemoryMatches = [];
+
+// ─── On boot: absorb any existing matches file into DB ────────
+// This runs after absorbScrapedMatches is defined (below buildAllMatches)
+// We defer with setImmediate so function is defined before call
+setImmediate(() => { try { absorbScrapedMatches(); } catch(e) {} });
 
 // ─── Parse a "time" string into a Date (IST-aware) ────────────
 // Supports: "7:30 PM", "19:30", "23 Apr 08:25 AM", "22 Apr 2025 7:30 PM"
@@ -126,47 +133,73 @@ function isBettingOpen(match) {
 }
 
 // ─── Matches: merge in-memory + file + admin-added ────────────
-function buildAllMatches() {
-  let scraped = [];
+// KEY FIX: Scraped matches are saved into DB.scrapedMatches permanently.
+// Even if Python scraper removes them from live_matches.json, they stay in DB
+// until admin manually settles or cancels them.
+function absorbScrapedMatches() {
+  let fresh = [];
   try {
     if (inMemoryMatches.length > 0) {
-      scraped = inMemoryMatches;
+      fresh = inMemoryMatches;
     } else if (fs.existsSync(MATCHES_FILE)) {
       const raw = JSON.parse(fs.readFileSync(MATCHES_FILE, 'utf8'));
-      scraped = (raw.matches || []).map(m => {
+      fresh = (raw.matches || []).map(m => {
         const parts = m.match ? m.match.split(/\s+vs\s+/i) : ['Team A', 'Team B'];
         return {
-          id: 'sc_' + Buffer.from(m.match||'').toString('base64').slice(0,10),
-          teamA: parts[0]?.trim() || 'Team A',
-          teamB: parts[1]?.trim() || 'Team B',
-          logo1: m.logo1 || null, logo2: m.logo2 || null,
-          time:  m.bet_closing_time || 'TBD',
-          source: 'scraped', active: true
+          id:     'sc_' + Buffer.from(m.match||'').toString('base64').slice(0,10),
+          teamA:  parts[0]?.trim() || 'Team A',
+          teamB:  parts[1]?.trim() || 'Team B',
+          logo1:  m.logo1 || null,
+          logo2:  m.logo2 || null,
+          time:   m.bet_closing_time || 'TBD',
+          source: 'scraped',
+          active: true
         };
       });
     }
   } catch(e) {}
 
-  const adminOnes = (DB.adminMatches || []).filter(m => m.active !== false);
-  const seen = new Set(adminOnes.map(m => `${m.teamA}|${m.teamB}`));
+  // Merge fresh scraped into DB.scrapedMatches (never remove, only add new)
+  if (!DB.scrapedMatches) DB.scrapedMatches = [];
+  let changed = false;
+  const existingIds = new Set(DB.scrapedMatches.map(m => m.id));
+  fresh.forEach(m => {
+    if (!existingIds.has(m.id)) {
+      DB.scrapedMatches.push(m);
+      changed = true;
+    }
+  });
+  if (changed) saveDB();
+}
+
+function buildAllMatches() {
+  absorbScrapedMatches();
+
+  const adminOnes   = (DB.adminMatches   || []).filter(m => m.active !== false);
+  const scrapedOnes = (DB.scrapedMatches || []);
+
+  // Merge: admin-added first, then scraped (dedup by teamA|teamB)
+  const seen   = new Set(adminOnes.map(m => `${m.teamA}|${m.teamB}`));
   const merged = [...adminOnes];
-  scraped.forEach(m => {
+  scrapedOnes.forEach(m => {
     const key = `${m.teamA}|${m.teamB}`;
     if (!seen.has(key)) { seen.add(key); merged.push(m); }
   });
+
   return merged.map(m => ({
     ...m,
     bettingOpen: isBettingOpen(m),
-    settled: DB.settledMatches[m.id] || null
+    settled:     DB.settledMatches[m.id] || null
   }));
 }
 
-// Admin sees ALL matches (settled + unsettled)
+// Admin sees ALL matches (settled + unsettled) — from DB, never from live file alone
 function getLiveMatchesAdmin() {
   return buildAllMatches();
 }
 
-// Users ONLY see unsettled matches — settled never reappear
+// Users ONLY see unsettled + betting-open or betting-closed-but-not-settled matches
+// Settled/cancelled never shown to users
 function getLiveMatches() {
   return buildAllMatches().filter(m => !DB.settledMatches[m.id]);
 }
@@ -650,8 +683,11 @@ app.post('/api/scraper/push', (req, res) => {
         source: 'scraped', active: true
       };
     });
+    // ── Persist new matches into DB immediately so they're never lost ──
+    absorbScrapedMatches();
     try { fs.writeFileSync(MATCHES_FILE, JSON.stringify(req.body, null, 2)); } catch(e) {}
-    io.emit('matches:update', { matches: getLiveMatches() });
+    io.emit('matches:update',        { matches: getLiveMatches() });
+    io.emit('matches:admin:update',  { matches: getLiveMatchesAdmin() });
     res.json({ ok: true, count: inMemoryMatches.length });
   } catch(e) { res.json({ ok: false, msg: e.message }); }
 });
