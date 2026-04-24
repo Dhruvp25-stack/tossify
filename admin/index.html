@@ -287,6 +287,8 @@ function goPage(name, el){
     const target=name.toLowerCase();
     if(txt.includes(target)||target.includes(txt.slice(0,4))) n.classList.add('active');
   });
+  // Reset user search input element so it rebuilds on next visit
+  if(name!=='users'){ userQuery=''; document.getElementById('pg-users').innerHTML=''; }
   currentPage=name;
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('active'));
   document.getElementById('pg-'+name).classList.add('active');
@@ -353,9 +355,30 @@ function renderUsers(){
   const el=document.getElementById('pg-users');
   const q=userQuery.toLowerCase();
   const filtered=DB.users.filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
-  el.innerHTML=`<div class="pg-title">Users (${DB.users.length})</div>
-  <input class="search" placeholder="🔍 Search name, username or email..." value="${userQuery}" oninput="userQuery=this.value;renderUsers()">
-  <div class="tbl">${filtered.length?filtered.map(u=>`
+
+  // Only do full render if the structure doesn't exist yet
+  if(!document.getElementById('userSearchInput')){
+    el.innerHTML=`<div class="pg-title">Users (<span id="userCount">${DB.users.length}</span>)</div>
+    <input id="userSearchInput" class="search" placeholder="🔍 Search name, username or email..." value="${userQuery}">
+    <div id="userList" class="tbl"></div>`;
+    document.getElementById('userSearchInput').addEventListener('input',function(){
+      userQuery=this.value;
+      renderUserList();
+    });
+    // Keep focus after first render
+    setTimeout(()=>{ const inp=document.getElementById('userSearchInput'); if(inp&&userQuery) { inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); } },0);
+  } else {
+    document.getElementById('userCount').textContent=DB.users.length;
+  }
+  renderUserList();
+}
+
+function renderUserList(){
+  const q=userQuery.toLowerCase();
+  const filtered=DB.users.filter(u=>u.name.toLowerCase().includes(q)||u.username.toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  const list=document.getElementById('userList');
+  if(!list) return;
+  list.innerHTML=filtered.length?filtered.map(u=>`
     <div class="tr">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div>
@@ -370,7 +393,7 @@ function renderUsers(){
         <button class="btn btn-blue" onclick="editUserBank('${u.id}','${u.name}')">🏦 Edit Bank</button>
         <button class="btn ${u.blocked?'btn-blue':'btn-red'}" onclick="toggleBlock('${u.id}')">${u.blocked?'Unblock':'Block'}</button>
       </div>
-    </div>`).join(''):'<div class="empty">No users found</div>'}</div>`;
+    </div>`).join(''):'<div class="empty">No users found</div>';
 }
 async function addBal(id,name){
   const amt=parseFloat(prompt(`Add balance to ${name} (₹):`)||0);
