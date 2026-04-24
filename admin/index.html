@@ -277,7 +277,8 @@ socket.on('db:bets',        d=>{DB.bets=d;       if(currentPage==='bets'||curren
 socket.on('db:deposits',    d=>{DB.deposits=d;    if(currentPage==='deposits'||currentPage==='dashboard') renderPage(currentPage);});
 socket.on('db:withdrawals', d=>{DB.withdrawals=d; if(currentPage==='withdrawals'||currentPage==='dashboard') renderPage(currentPage);});
 socket.on('db:tickets',     d=>{DB.tickets=d;     if(currentPage==='tickets'||currentPage==='dashboard') renderPage(currentPage);});
-socket.on('matches:update', d=>{DB.allMatches=d.matches; if(currentPage==='matches'||currentPage==='dashboard') renderPage(currentPage);});
+// Admin listens to admin-only broadcast — gets ALL matches including settled
+socket.on('matches:admin:update', d=>{DB.allMatches=d.matches; if(currentPage==='matches'||currentPage==='dashboard') renderPage(currentPage);});
 
 function goPage(name, el){
   document.querySelectorAll('.snav,.msnav').forEach(n=>n.classList.remove('active'));
