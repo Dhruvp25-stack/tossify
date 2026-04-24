@@ -211,7 +211,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 <script>
 const socket = io();
 let ATOKEN = sessionStorage.getItem('a_tok') || '';
-let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[], depositAccount:{}, settledMatches:{} };
+let DB = { users:[], adminMatches:[], allMatches:[], bets:[], deposits:[], withdrawals:[], tickets:[], depositAccount:{}, settledMatches:{}, maintenance: false };
 let currentPage = 'dashboard';
 let userQuery = '';
 
@@ -304,6 +304,13 @@ function renderPage(n){
   else if(n==='settings')    renderSettings();
 }
 
+async function toggleMaintenance(){
+  const enabled = !DB.maintenance;
+  const r = await api('POST','/api/admin/maintenance',{enabled});
+  if(r.ok){ DB.maintenance=r.maintenance; renderPage('dashboard'); toast(r.maintenance?'🔧 Maintenance ON — site locked for users':'✅ Maintenance OFF — site is live', r.maintenance?'go':'g'); }
+  else toast('Error toggling maintenance','r');
+}
+
 // ─── DASHBOARD ───────────────────────────────────────────────
 function renderDash(){
   const el=document.getElementById('pg-dashboard');
@@ -311,7 +318,15 @@ function renderDash(){
   const totWith=DB.withdrawals.filter(w=>w.status==='Approved').reduce((s,w)=>s+w.amount,0);
   const pendBets=DB.bets.filter(b=>b.status==='Pending').length;
   const unsettledMatches = (DB.allMatches||[]).filter(m=>!m.settled);
+  const maintOn = DB.maintenance;
   el.innerHTML=`<div class="pg-title">Dashboard</div>
+  <div style="margin-bottom:18px;background:${maintOn?'rgba(231,76,60,.1)':'rgba(60,181,74,.07)'};border:1.5px solid ${maintOn?'rgba(231,76,60,.4)':'rgba(60,181,74,.25)'};border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:1px;color:${maintOn?'var(--red)':'var(--green)'};">🔧 Maintenance Mode</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">${maintOn?'Site is LOCKED for all users (demo allowed)':'Site is LIVE — all users can access normally'}</div>
+    </div>
+    <button class="btn ${maintOn?'btn-red':'btn-green'}" style="min-width:160px;" onclick="toggleMaintenance()">${maintOn?'🟢 TURN OFF MAINTENANCE':'🔴 ENABLE MAINTENANCE'}</button>
+  </div>
   <div class="stats">
     <div class="stat"><div class="sl">Total Users</div><div class="sv g">${DB.users.length}</div></div>
     <div class="stat"><div class="sl">Total Bets</div><div class="sv b">${DB.bets.length}</div></div>
