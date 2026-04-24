@@ -173,8 +173,9 @@ function getLiveMatches() {
 
 // ─── Cron: auto-close betting when time passes ────────────────
 cron.schedule('* * * * *', () => {
-  // Every minute, emit updated matches so frontend reflects open/closed status
+  // Users get filtered (no settled), admin gets all
   io.emit('matches:update', { matches: getLiveMatches() });
+  io.emit('matches:admin:update', { matches: getLiveMatchesAdmin() });
 });
 
 // ─── Session tokens ───────────────────────────────────────────
