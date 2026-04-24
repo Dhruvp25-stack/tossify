@@ -62,6 +62,9 @@ function saveDB() {
 let DB = loadDB();
 if (!DB.settledMatches) DB.settledMatches = {};
 
+// ─── Maintenance mode ─────────────────────────────────────────
+let maintenanceMode = false;
+
 // ─── In-memory scraped matches ────────────────────────────────
 let inMemoryMatches = [];
 
@@ -215,7 +218,11 @@ app.post('/api/register', (req, res) => {
 });
 
 app.post('/api/login', (req, res) => {
+  // Maintenance mode blocks regular user login (not demo, not admin)
   const { username, password } = req.body;
+  if (maintenanceMode && username.toLowerCase() !== 'demo') {
+    return res.json({ ok: false, msg: '🔧 Site is under maintenance. Please try again later.' });
+  }
   if (username.toLowerCase() === 'demo') {
     const token = makeToken('demo_user', false);
     return res.json({
@@ -247,6 +254,9 @@ function demoBlock(req, res, next) {
 }
 
 app.post('/api/logout', auth, (req, res) => { killSession(req.headers['x-token']); res.json({ ok: true }); });
+
+// ─── Maintenance mode status (public) ─────────────────────────
+app.get('/api/maintenance', (req, res) => res.json({ maintenance: maintenanceMode }));
 app.get('/api/me', auth, (req, res) => {
   if (req.isDemo) return res.json({ ok: true, user: req.user });
   res.json({ ok: true, user: pub(req.user) });
@@ -397,6 +407,13 @@ function adminAuth(req, res, next) {
 
 app.post('/api/admin/logout', adminAuth, (req, res) => { killSession(req.headers['x-token']); res.json({ ok: true }); });
 
+// ─── Admin: toggle maintenance mode ───────────────────────────
+app.post('/api/admin/maintenance', adminAuth, (req, res) => {
+  maintenanceMode = !!req.body.enabled;
+  io.emit('maintenance:update', { maintenance: maintenanceMode });
+  res.json({ ok: true, maintenance: maintenanceMode });
+});
+
 app.get('/api/admin/data', adminAuth, (req, res) => {
   // Admin sees ALL matches including already-settled ones
   res.json({
@@ -409,7 +426,8 @@ app.get('/api/admin/data', adminAuth, (req, res) => {
     withdrawals: DB.withdrawals,
     tickets: DB.tickets,
     depositAccount: depositAccount,
-    settledMatches: DB.settledMatches || {}
+    settledMatches: DB.settledMatches || {},
+    maintenance: maintenanceMode
   });
 });
 
