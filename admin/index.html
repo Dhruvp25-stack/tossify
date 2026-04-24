@@ -53,6 +53,12 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 .btn-green{background:linear-gradient(135deg,var(--green),var(--green3));color:#fff;box-shadow:0 4px 16px rgba(60,181,74,.25);}
 .btn-green:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(60,181,74,.35);}
 .btn-red{background:rgba(231,76,60,.12);color:var(--red);border:1px solid rgba(231,76,60,.3);}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#c8860a);color:#000;}
+.btn-gold:hover{filter:brightness(1.1);}
+.status-open{background:rgba(46,204,64,.15);color:var(--green);border:1px solid rgba(46,204,64,.3);}
+.status-closed{background:rgba(240,192,64,.15);color:var(--gold);border:1px solid rgba(240,192,64,.3);}
+.status-settled{background:rgba(52,152,219,.15);color:var(--blue);border:1px solid rgba(52,152,219,.3);}
+.status-cancelled{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3);}
 .btn-gold{background:rgba(240,192,64,.12);color:var(--gold);border:1px solid rgba(240,192,64,.3);}
 .btn-blue{background:rgba(61,142,240,.12);color:var(--blue);border:1px solid rgba(61,142,240,.3);}
 .btn-outline{background:transparent;border:1px solid var(--border2);color:var(--muted);}
@@ -457,7 +463,16 @@ function renderDash(){
   const totWith=DB.withdrawals.filter(w=>w.status==='Approved').reduce((s,w)=>s+w.amount,0);
   const pendBets=DB.bets.filter(b=>b.status==='Pending').length;
   const unsettledMatches = (DB.allMatches||[]).filter(m=>!m.settled);
+  const remainingCount = (DB.allMatches||[]).filter(m => !((DB.settledMatches||{})[m.id]) && !m.bettingOpen).length;
   const maintOn = DB.maintenance;
+  const remainingAlert = remainingCount > 0 ? `
+  <div style="margin-bottom:14px;background:rgba(240,192,64,.08);border:1.5px solid rgba(240,192,64,.35);border-radius:12px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--gold);">⏳ ${remainingCount} Match${remainingCount>1?'es':''} Pending Settlement</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:2px;">Bet time is over — go to Matches tab to settle or cancel</div>
+    </div>
+    <button class="btn btn-gold" style="min-width:130px;" onclick="goPage('matches',document.querySelector('[onclick*=matches]'))">GO TO MATCHES</button>
+  </div>` : '';
   el.innerHTML=`<div class="pg-title">Dashboard</div>
   <div style="margin-bottom:18px;background:${maintOn?'rgba(231,76,60,.1)':'rgba(60,181,74,.07)'};border:1.5px solid ${maintOn?'rgba(231,76,60,.4)':'rgba(60,181,74,.25)'};border-radius:12px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
     <div>
@@ -466,6 +481,7 @@ function renderDash(){
     </div>
     <button class="btn ${maintOn?'btn-red':'btn-green'}" style="min-width:160px;" onclick="toggleMaintenance()">${maintOn?'🟢 TURN OFF MAINTENANCE':'🔴 ENABLE MAINTENANCE'}</button>
   </div>
+  ${remainingAlert}
   <div class="stats">
     <div class="stat"><div class="sl">Total Users</div><div class="sv g">${DB.users.length}</div></div>
     <div class="stat"><div class="sl">Total Bets</div><div class="sv b">${DB.bets.length}</div></div>
@@ -474,10 +490,10 @@ function renderDash(){
     <div class="stat"><div class="sl">Pending With</div><div class="sv go">${DB.withdrawals.filter(w=>w.status==='Pending').length}</div></div>
     <div class="stat"><div class="sl">Total Deposited</div><div class="sv g">₹${totDep.toFixed(0)}</div></div>
     <div class="stat"><div class="sl">Total Withdrawn</div><div class="sv r">₹${totWith.toFixed(0)}</div></div>
-    <div class="stat"><div class="sl">Active Matches</div><div class="sv g">${unsettledMatches.length}</div></div>
+    <div class="stat"><div class="sl">Pending Settlement</div><div class="sv go">${remainingCount}</div></div>
     <div class="stat"><div class="sl">Open Tickets</div><div class="sv go">${DB.tickets.filter(t=>t.status==='Open').length}</div></div>
   </div>
-  ${pendBets?`<div class="pending-badge">⚠️ ${pendBets} unsettled bet${pendBets>1?'s':''} — go to Matches to settle</div>`:''}
+  ${pendBets?`<div class="pending-badge">⚠️ ${pendBets} pending bet${pendBets>1?'s':''} — go to Matches to settle</div>`:''}
   <div class="pg-title" style="font-size:18px;margin-bottom:10px;">Recent Bets</div>
   <div class="tbl">${DB.bets.slice(0,8).map(b=>`
     <div class="tr">
@@ -625,65 +641,79 @@ function getMatchStatus(m) {
   return 'open';
 }
 
+function buildMatchCard(m, showSettle) {
+  const status = getMatchStatus(m);
+  const settledInfo = (DB.settledMatches||{})[m.id];
+  const pendingBets = DB.bets.filter(b=>b.matchId===m.id && b.status==='Pending');
+  const matchLabel = `${m.teamA} vs ${m.teamB}`;
+  const mIdSafe = m.id.replace(/[^a-zA-Z0-9_]/g,'_');
+  const statusBadge =
+    status==='open'      ? `<span class="chip status-open">🟢 Betting Open</span>` :
+    status==='closed'    ? `<span class="chip status-closed">🔒 Betting Closed</span>` :
+    status==='settled'   ? `<span class="chip status-settled">✅ Settled</span>` :
+                           `<span class="chip status-cancelled">❌ Cancelled</span>`;
+
+  const settleSection = showSettle && !settledInfo ? `
+    <div class="settle-box">
+      <div class="sb-title">🏆 Settle or Cancel Match</div>
+      <div class="sb-sub">${pendingBets.length} pending bet${pendingBets.length!==1?'s':''} • Select winner and click Settle, or Cancel to void all bets</div>
+      <div class="sb-teams">
+        <button class="team-btn" id="tb_${mIdSafe}_a" onclick="selectWinner('${mIdSafe}','${m.teamA.replace(/'/g,"\\'")}')">🏏 ${m.teamA}</button>
+        <button class="team-btn" id="tb_${mIdSafe}_b" onclick="selectWinner('${mIdSafe}','${m.teamB.replace(/'/g,"\\'")}')">🏏 ${m.teamB}</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-green" onclick="settleMatchAdmin('${m.id}','${m.teamA.replace(/'/g,"\\'")}','${m.teamB.replace(/'/g,"\\'")}','${mIdSafe}')">✅ SETTLE BETS</button>
+        <button class="btn btn-red" onclick="cancelMatchAdmin('${m.id}','${matchLabel.replace(/'/g,"\\'")}')">❌ CANCEL (Refund All)</button>
+      </div>
+    </div>` : '';
+
+  return `<div class="tr">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+      <div>
+        <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
+        <div class="tr-sub">⏰ Toss/Close: ${m.time||'TBD'} • Source: ${m.source||'admin'} • ${pendingBets.length} pending bet${pendingBets.length!==1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        ${statusBadge}
+        ${m.source==='admin'?`<button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="deleteMatch('${m.id}')">🗑 Delete</button>`:''}
+      </div>
+    </div>
+    ${settleSection}
+    ${settledInfo ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;">${settledInfo.action==='cancel'?'❌ Cancelled (all refunded)':`✅ Winner: <strong style="color:var(--green)">${settledInfo.winnerTeam}</strong>`} • ${settledInfo.settledAt||''}</div>` : ''}
+  </div>`;
+}
+
 function renderMatches(){
   const el=document.getElementById('pg-matches');
   const allM = DB.allMatches || [];
-  const unsettled = allM.filter(m => !((DB.settledMatches||{})[m.id]));
-  const settled   = allM.filter(m =>  ((DB.settledMatches||{})[m.id]));
 
-  const matchCards = unsettled.map(m => {
-    const status = getMatchStatus(m);
-    const settled = (DB.settledMatches||{})[m.id];
-    const pendingBets = DB.bets.filter(b=>b.matchId===m.id && b.status==='Pending');
-    const matchLabel = `${m.teamA} vs ${m.teamB}`;
-    const mIdSafe = m.id.replace(/[^a-zA-Z0-9_]/g,'_');
-    const statusBadge =
-      status==='open'      ? `<span class="chip status-open">🟢 Betting Open</span>` :
-      status==='closed'    ? `<span class="chip status-closed">🔒 Betting Closed</span>` :
-      status==='settled'   ? `<span class="chip status-settled">✅ Settled</span>` :
-                             `<span class="chip status-cancelled">❌ Cancelled</span>`;
+  // Split into 3 groups
+  const liveMatches      = allM.filter(m => !((DB.settledMatches||{})[m.id]) && m.bettingOpen);
+  const remainingMatches = allM.filter(m => !((DB.settledMatches||{})[m.id]) && !m.bettingOpen);
+  const settledMatches   = allM.filter(m =>  ((DB.settledMatches||{})[m.id]));
 
-    const settleSection = !settled ? `
-      <div class="settle-box">
-        <div class="sb-title">🏆 Settle or Cancel Match</div>
-        <div class="sb-sub">${pendingBets.length} pending bet${pendingBets.length!==1?'s':''} • Select winner and click Settle, or Cancel to void all bets</div>
-        <div class="sb-teams">
-          <button class="team-btn" id="tb_${mIdSafe}_a" onclick="selectWinner('${mIdSafe}','${m.teamA.replace(/'/g,"\\'")}')">🏏 ${m.teamA}</button>
-          <button class="team-btn" id="tb_${mIdSafe}_b" onclick="selectWinner('${mIdSafe}','${m.teamB.replace(/'/g,"\\'")}')">🏏 ${m.teamB}</button>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-green" onclick="settleMatchAdmin('${m.id}','${m.teamA.replace(/'/g,"\\'")}','${m.teamB.replace(/'/g,"\\'")}','${mIdSafe}')">✅ SETTLE BETS</button>
-          <button class="btn btn-red" onclick="cancelMatchAdmin('${m.id}','${matchLabel.replace(/'/g,"\\'")}')">❌ CANCEL (Refund All)</button>
-        </div>
-      </div>` : `<div style="font-size:12px;color:var(--muted);margin-top:6px;">Settled at ${(DB.settledMatches||{})[m.id]?.settledAt||''}</div>`;
+  const liveSection = `
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px;">
+      <div class="pg-title" style="font-size:16px;margin:0;">🟢 Live / Open (${liveMatches.length})</div>
+    </div>
+    <div class="tbl">${liveMatches.length ? liveMatches.map(m=>buildMatchCard(m,true)).join('') : '<div class="empty">No live matches right now</div>'}</div>`;
 
-    return `<div class="tr">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
-        <div>
-          <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
-          <div class="tr-sub">⏰ Toss/Close: ${m.time||'TBD'} • Source: ${m.source||'admin'} • ${pendingBets.length} pending bets</div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          ${statusBadge}
-          ${m.source==='admin'?`<button class="btn btn-outline" style="padding:5px 10px;font-size:11px;" onclick="deleteMatch('${m.id}')">🗑 Delete</button>`:''}
-        </div>
-      </div>
-      ${settleSection}
-    </div>`;
-  }).join('');
+  const remainingSection = `
+    <div style="display:flex;align-items:center;gap:10px;margin:20px 0 10px;">
+      <div class="pg-title" style="font-size:16px;margin:0;color:var(--gold);">⏳ Pending Settlement (${remainingMatches.length})</div>
+      ${remainingMatches.length ? `<span class="pending-badge">⚠️ Needs your action</span>` : ''}
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Bet time is over — settle or cancel these matches to pay out users.</div>
+    <div class="tbl">${remainingMatches.length ? remainingMatches.map(m=>buildMatchCard(m,true)).join('') : '<div class="empty" style="color:var(--green);">✅ All matches settled — nothing pending!</div>'}</div>`;
 
-  const settledCards = settled.length ? `
-    <div class="pg-title" style="font-size:16px;margin:14px 0 8px;">Settled / Cancelled Matches</div>
-    <div class="tbl">${settled.map(m=>{
-      const s=(DB.settledMatches||{})[m.id];
-      return `<div class="tr">
-        <div class="tr-name">${m.teamA} vs ${m.teamB}</div>
-        <div class="tr-sub">⏰ ${m.time||'TBD'} • ${s?.action==='cancel'?'❌ Cancelled (all refunded)':`✅ Settled — Winner: <strong style="color:var(--green)">${s?.winnerTeam||''}</strong>`}</div>
-        <div class="tr-sub">Settled at: ${s?.settledAt||''}</div>
-      </div>`;
-    }).join('')}</div>` : '';
+  const settledSection = settledMatches.length ? `
+    <div style="margin:20px 0 10px;">
+      <div class="pg-title" style="font-size:16px;margin:0;">✅ Settled / Cancelled (${settledMatches.length})</div>
+    </div>
+    <div class="tbl">${settledMatches.map(m=>buildMatchCard(m,false)).join('')}</div>` : '';
 
-  el.innerHTML=`<div class="pg-title">Matches</div>
+  el.innerHTML=`
+  <div class="pg-title">Matches</div>
   <div class="add-form">
     <h3>Add New Match</h3>
     <div class="frow">
@@ -693,9 +723,9 @@ function renderMatches(){
     <div class="field" style="margin-bottom:10px"><label>Toss / Bet Closing Time</label><input id="amT" placeholder="e.g. 7:30 PM or 22 Apr 07:30 PM"></div>
     <button class="btn btn-green" onclick="addMatch()">+ ADD MATCH</button>
   </div>
-  <div class="pg-title" style="font-size:18px;margin-bottom:10px;">Active Matches (${unsettled.length})</div>
-  <div class="tbl">${unsettled.length ? matchCards : '<div class="empty">No active matches</div>'}</div>
-  ${settledCards}`;
+  ${liveSection}
+  ${remainingSection}
+  ${settledSection}`;
 }
 
 // Track selected winners per match
