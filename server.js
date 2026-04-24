@@ -290,13 +290,21 @@ app.get('/api/deposit-account', (req, res) => res.json({ ok: true, account: depo
 app.post('/api/bet', auth, demoBlock, (req, res) => {
   const { matchId, team, amount } = req.body;
   const amt = parseFloat(amount);
-  if (isNaN(amt) || amt < 50) return res.json({ ok: false, msg: 'Minimum bet is ₹50' });
-  if (amt > req.user.balance) return res.json({ ok: false, msg: 'Insufficient balance' });
+  if (isNaN(amt) || amt < 50)    return res.json({ ok: false, msg: 'Minimum bet is ₹50' });
+  if (amt > 10000)               return res.json({ ok: false, msg: 'Maximum bet per match is ₹10,000' });
+  if (amt > req.user.balance)    return res.json({ ok: false, msg: 'Insufficient balance' });
 
   const allM = getLiveMatches();
   const match = allM.find(m => m.id === matchId);
   if (!match) return res.json({ ok: false, msg: 'Match not found' });
   if (DB.settledMatches[matchId]) return res.json({ ok: false, msg: 'This match has already been settled.' });
+
+  // Check user has not already bet ₹10,000 on this match
+  const existingBets = DB.bets.filter(b => b.userId === req.user.id && b.matchId === matchId && b.status === 'Pending');
+  const alreadyBet   = existingBets.reduce((s, b) => s + b.amount, 0);
+  if (alreadyBet + amt > 10000) {
+    return res.json({ ok: false, msg: `Bet limit per match is ₹10,000. You've already bet ₹${alreadyBet.toFixed(0)} on this match.` });
+  }
 
   // Bet closing time check
   if (!isBettingOpen(match)) {
