@@ -205,7 +205,7 @@ body::before {
 .topbar::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--green), var(--gold), var(--green)); background-size: 200% 100%; animation: shimmer 4s linear infinite; }
 @keyframes shimmer { 0%{background-position:0% 0%} 100%{background-position:200% 0%} }
 .topbar-logo { display: flex; align-items: center; gap: 10px; }
-.topbar-logo img { height: 30px; filter: brightness(0) invert(1) drop-shadow(0 0 8px rgba(29,185,84,.4)); }
+.topbar-logo img { height: 34px; object-fit: contain; }
 .topbar-right { display: flex; align-items: center; gap: 10px; }
 .bal-pill {
   background: rgba(29,185,84,.15); color: #fff; font-size: 14px; padding: 6px 14px;
@@ -492,8 +492,8 @@ body::before {
 <!-- ═══ AUTH ═══ -->
 <div id="authScreen" class="screen active">
   <div class="logo-block">
-    <img src="logo.png" alt="Tossify" onerror="this.style.display='none';document.getElementById('logoText').style.display='block'">
-    <div id="logoText" style="display:none;font-family:'Orbitron',sans-serif;font-size:42px;color:var(--green);letter-spacing:4px;text-shadow:0 0 30px rgba(0,230,118,.5);">TOSSIFY</div>
+    <img src="/logo.png" alt="Tossify" style="width:200px;max-width:70vw;" onerror="this.style.display='none';document.getElementById('logoText').style.display='block'">
+    <div id="logoText" style="display:none;font-family:'Orbitron',sans-serif;font-size:36px;color:var(--navy);letter-spacing:4px;font-weight:900;">TOSSIFY</div>
     <p>Toss Ki Betting, Smart Choice.</p>
     <div class="social-row">
       <a href="https://www.instagram.com/officialtossify_?igsh=eTUwN2s5ZDVwYThk" target="_blank" class="social-btn social-ig">📸 Instagram</a>
@@ -534,7 +534,7 @@ body::before {
 
   <div class="topbar">
     <div class="topbar-logo">
-      <img src="/logo.png" alt="Tossify" style="height:30px;filter:brightness(0) invert(1);" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-family:'Orbitron',sans-serif;font-size:18px;color:#fff;letter-spacing:3px;font-weight:900;">TOSSIFY</span>
+      <img src="/logo.png" alt="Tossify" style="height:34px;object-fit:contain;" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none;font-family:'Orbitron',sans-serif;font-size:18px;color:#fff;letter-spacing:3px;font-weight:900;">TOSSIFY</span>
     </div>
     <div class="topbar-right">
       <div class="bal-pill" id="topBalWrap">₹<span id="topBal">0.00</span></div>
