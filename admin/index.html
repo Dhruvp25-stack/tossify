@@ -138,11 +138,19 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
 .ss-modal.open{display:flex;}
 .ss-modal img{max-width:90vw;max-height:90vh;border-radius:10px;border:2px solid var(--border);}
 .ss-close{position:fixed;top:18px;right:18px;background:var(--red);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;font-weight:700;display:flex;align-items:center;justify-content:center;}
-/* Match status badge */
-.status-open{background:rgba(46,204,64,.15);color:var(--green);border:1px solid rgba(46,204,64,.3);}
-.status-closed{background:rgba(240,192,64,.15);color:var(--gold);border:1px solid rgba(240,192,64,.3);}
-.status-settled{background:rgba(52,152,219,.15);color:var(--blue);border:1px solid rgba(52,152,219,.3);}
-.status-cancelled{background:rgba(231,76,60,.15);color:var(--red);border:1px solid rgba(231,76,60,.3);}
+/* Charts */
+.chart-wrap{background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:16px;margin-bottom:16px;}
+.chart-wrap h3{font-size:15px;color:#fff;margin-bottom:12px;font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
+.chart-tabs{display:flex;gap:6px;margin-bottom:14px;}
+.chart-tab{padding:6px 14px;border-radius:7px;border:1.5px solid var(--border2);cursor:pointer;font-size:12px;font-weight:800;color:var(--muted);transition:all .2s;background:transparent;font-family:'Nunito',sans-serif;}
+.chart-tab.active{border-color:var(--green);color:var(--green);background:rgba(60,181,74,.08);}
+.pl-card{background:linear-gradient(135deg,var(--card),var(--card2));border:1px solid var(--border2);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.pl-match{font-family:'Bebas Neue',sans-serif;font-size:15px;color:#fff;margin-bottom:6px;letter-spacing:.5px;}
+.pl-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:3px;}
+.pl-row span:last-child{font-weight:800;}
+.pl-net-pos{color:var(--red)!important;}
+.pl-net-neg{color:var(--green)!important;}
+.export-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
 </style>
 </head>
 <body>
@@ -175,6 +183,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
   </div>
   <div class="mobile-tabs" id="mobileTabs">
     <div class="msnav active" onclick="goPage('dashboard',this)">📊 Dash</div>
+    <div class="msnav" onclick="goPage('analytics',this)">📈 Analytics</div>
     <div class="msnav" onclick="goPage('users',this)">👥 Users</div>
     <div class="msnav" onclick="goPage('deposits',this)">💳 Deposits</div>
     <div class="msnav" onclick="goPage('withdrawals',this)">🏦 Withdraw</div>
@@ -186,6 +195,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
   <div class="layout">
     <div class="sidebar" id="sidebar">
       <div class="snav active" onclick="goPage('dashboard',this)"><span class="si">📊</span>Dashboard</div>
+      <div class="snav" onclick="goPage('analytics',this)"><span class="si">📈</span>Analytics</div>
       <div class="snav" onclick="goPage('users',this)"><span class="si">👥</span>Users</div>
       <div class="snav" onclick="goPage('deposits',this)"><span class="si">💳</span>Deposits</div>
       <div class="snav" onclick="goPage('withdrawals',this)"><span class="si">🏦</span>Withdrawals</div>
@@ -196,6 +206,7 @@ h2,h3{font-family:'Bebas Neue',sans-serif;letter-spacing:1px;}
     </div>
     <div class="content">
       <div class="pg active" id="pg-dashboard"></div>
+      <div class="pg" id="pg-analytics"></div>
       <div class="pg" id="pg-users"></div>
       <div class="pg" id="pg-deposits"></div>
       <div class="pg" id="pg-withdrawals"></div>
@@ -298,6 +309,7 @@ function goPage(name, el){
 
 function renderPage(n){
   if(n==='dashboard')        renderDash();
+  else if(n==='analytics')   renderAnalytics();
   else if(n==='users')       renderUsers();
   else if(n==='deposits')    renderDeposits();
   else if(n==='withdrawals') renderWithdrawals();
@@ -312,6 +324,130 @@ async function toggleMaintenance(){
   const r = await api('POST','/api/admin/maintenance',{enabled});
   if(r.ok){ DB.maintenance=r.maintenance; renderPage('dashboard'); toast(r.maintenance?'🔧 Maintenance ON — site locked for users':'✅ Maintenance OFF — site is live', r.maintenance?'go':'g'); }
   else toast('Error toggling maintenance','r');
+}
+
+// ─── CSV EXPORT ──────────────────────────────────────────────
+function exportCSV(type){
+  let rows=[], filename='';
+  if(type==='users'){
+    filename='tossify_users.csv';
+    rows=[['Name','Username','Email','Mobile','Balance','Joined','Status']];
+    DB.users.forEach(u=>rows.push([u.name,u.username,u.email||'',u.mobile||'',(u.balance||0).toFixed(2),u.joined||'',u.blocked?'Blocked':'Active']));
+  } else if(type==='deposits'){
+    filename='tossify_deposits.csv';
+    rows=[['ID','User','Amount','UTR','Status','Time']];
+    DB.deposits.forEach(d=>rows.push([d.id,d.userName,d.amount,d.utr,d.status,d.time]));
+  } else if(type==='withdrawals'){
+    filename='tossify_withdrawals.csv';
+    rows=[['ID','User','Amount','Status','Time']];
+    DB.withdrawals.forEach(w=>rows.push([w.id,w.userName,w.amount,w.status,w.time]));
+  } else if(type==='bets'){
+    filename='tossify_bets.csv';
+    rows=[['ID','User','Match','Team','Amount','Odds','Potential','Status','Time']];
+    DB.bets.forEach(b=>rows.push([b.id,b.userName,b.match,b.team,b.amount,b.odds,b.potential,b.status,b.time]));
+  } else if(type==='transactions'){
+    filename='tossify_all_transactions.csv';
+    rows=[['Type','ID','User','Amount','Status','Time']];
+    DB.deposits.forEach(d=>rows.push(['Deposit',d.id,d.userName,d.amount,d.status,d.time]));
+    DB.withdrawals.forEach(w=>rows.push(['Withdrawal',w.id,w.userName,w.amount,w.status,w.time]));
+  }
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=filename; a.click();
+  toast('📥 Exported '+filename,'g');
+}
+
+// ─── ANALYTICS ───────────────────────────────────────────────
+let chartPeriod='daily';
+function renderAnalytics(){
+  const el=document.getElementById('pg-analytics');
+
+  // P&L per settled match
+  const settledIds=Object.keys(DB.settledMatches||{});
+  const plData=settledIds.map(mid=>{
+    const info=DB.settledMatches[mid];
+    const matchBets=DB.bets.filter(b=>b.matchId===mid);
+    const totalIn=matchBets.reduce((s,b)=>s+b.amount,0);
+    const totalOut=matchBets.filter(b=>b.status==='Won').reduce((s,b)=>s+b.potential,0);
+    const refunded=matchBets.filter(b=>b.status==='Void').reduce((s,b)=>s+b.amount,0);
+    const net=totalIn-totalOut-refunded;
+    const matchName=matchBets[0]?.match||mid;
+    return{mid,matchName,totalIn,totalOut,refunded,net,info};
+  }).sort((a,b)=>b.net-a.net);
+
+  // Revenue by day/week
+  function getRevenueByPeriod(period){
+    const map={};
+    DB.deposits.filter(d=>d.status==='Approved').forEach(d=>{
+      const dt=new Date(d.time); if(isNaN(dt)) return;
+      const key=period==='daily'
+        ? dt.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})
+        : 'Week '+Math.ceil(dt.getDate()/7)+' '+dt.toLocaleDateString('en-IN',{month:'short'});
+      map[key]=(map[key]||0)+d.amount;
+    });
+    return map;
+  }
+
+  const revMap=getRevenueByPeriod(chartPeriod);
+  const revLabels=Object.keys(revMap).slice(-14);
+  const revVals=revLabels.map(k=>revMap[k]);
+  const maxRev=Math.max(...revVals,1);
+
+  el.innerHTML=`
+  <div class="pg-title">📈 Analytics & Reports</div>
+
+  <!-- Export buttons -->
+  <div class="chart-wrap">
+    <h3>📥 Export CSV</h3>
+    <div class="export-row">
+      <button class="btn btn-green" onclick="exportCSV('users')">👥 Users</button>
+      <button class="btn btn-blue" onclick="exportCSV('deposits')">💳 Deposits</button>
+      <button class="btn btn-blue" onclick="exportCSV('withdrawals')">🏦 Withdrawals</button>
+      <button class="btn btn-gold" onclick="exportCSV('bets')">🎯 All Bets</button>
+      <button class="btn btn-outline" onclick="exportCSV('transactions')">📋 All Transactions</button>
+    </div>
+  </div>
+
+  <!-- Revenue Chart -->
+  <div class="chart-wrap">
+    <h3>💰 Deposit Revenue</h3>
+    <div class="chart-tabs">
+      <button class="chart-tab ${chartPeriod==='daily'?'active':''}" onclick="chartPeriod='daily';renderAnalytics()">Daily</button>
+      <button class="chart-tab ${chartPeriod==='weekly'?'active':''}" onclick="chartPeriod='weekly';renderAnalytics()">Weekly</button>
+    </div>
+    ${revLabels.length===0?'<div class="empty">No approved deposits yet</div>':
+    `<div style="display:flex;align-items:flex-end;gap:6px;height:160px;padding:0 4px;overflow-x:auto;">
+      ${revLabels.map((lbl,i)=>{
+        const pct=Math.round((revVals[i]/maxRev)*100);
+        return`<div style="display:flex;flex-direction:column;align-items:center;gap:4px;min-width:40px;flex:1;">
+          <div style="font-size:9px;color:var(--green);font-weight:800;">₹${revVals[i]>=1000?(revVals[i]/1000).toFixed(1)+'k':revVals[i]}</div>
+          <div style="width:100%;background:linear-gradient(180deg,var(--green),var(--green3));border-radius:4px 4px 0 0;height:${Math.max(pct,4)}%;transition:height .5s;"></div>
+          <div style="font-size:9px;color:var(--muted);text-align:center;line-height:1.2;">${lbl}</div>
+        </div>`;
+      }).join('')}
+    </div>`}
+  </div>
+
+  <!-- P&L per match -->
+  <div class="chart-wrap">
+    <h3>🏏 Profit / Loss Per Match</h3>
+    ${plData.length===0?'<div class="empty">No settled matches yet</div>':
+    plData.map(p=>`
+      <div class="pl-card">
+        <div class="pl-match">${p.matchName}</div>
+        <div class="pl-row"><span>Total Bet In</span><span style="color:var(--gold)">₹${p.totalIn.toFixed(2)}</span></div>
+        <div class="pl-row"><span>Paid Out (Winners)</span><span style="color:var(--red)">₹${p.totalOut.toFixed(2)}</span></div>
+        ${p.refunded>0?`<div class="pl-row"><span>Refunded (Void)</span><span style="color:var(--blue)">₹${p.refunded.toFixed(2)}</span></div>`:''}
+        <div class="pl-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px;">
+          <span style="font-weight:800;color:#fff;">Net ${p.net>=0?'Profit':'Loss'}</span>
+          <span style="font-size:16px;font-weight:800;" class="${p.net>=0?'pl-net-pos':'pl-net-neg'}">
+            ${p.net>=0?'+':''}₹${p.net.toFixed(2)}
+          </span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px;">${p.info.action==='cancel'?'🔴 Cancelled':('🏆 Winner: '+p.info.winnerTeam)} • ${p.info.settledAt}</div>
+      </div>`).join('')}
+  </div>`;
 }
 
 // ─── DASHBOARD ───────────────────────────────────────────────
