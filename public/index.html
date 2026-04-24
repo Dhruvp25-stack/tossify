@@ -883,6 +883,7 @@ async function doDemo() {
 
 async function doLogout() {
   stopDemoTimer();
+  stopInactivityWatch();
   await api('POST', '/api/logout');
   TOKEN = ''; USER = null; IS_DEMO = false;
   localStorage.removeItem('t_tok');
@@ -908,7 +909,7 @@ function initApp() {
   document.getElementById('topBalWrap').style.display = IS_DEMO ? 'none' : 'block';
   renderUserHeader();
   loadMatches();
-  if (!IS_DEMO) { loadTransactions(); loadBetHistory(); loadTickets(); loadWagerStatus(); }
+  if (!IS_DEMO) { loadTransactions(); loadBetHistory(); loadTickets(); loadWagerStatus(); startInactivityWatch(); }
   if (IS_DEMO) { startDemoTimer(); }
   else { stopDemoTimer(); }
   switchNav('live');
@@ -1416,6 +1417,27 @@ loadDepositAccount();
 
 // ── Boot ───────────────────────────────────────────────────
 // ── Guaranteed button bindings (backup for onclick) ──────
+// ── 30-min Inactivity Auto-logout ─────────────────────────────
+const INACTIVITY_LIMIT = 30 * 60 * 1000; // 30 minutes
+let inactivityTimer = null;
+function resetInactivityTimer() {
+  if (!USER || IS_DEMO) return; // demo uses its own 5-min timer
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(() => {
+    toast('Logged out due to inactivity', 'go');
+    setTimeout(doLogout, 1500);
+  }, INACTIVITY_LIMIT);
+}
+function startInactivityWatch() {
+  ['click','touchstart','keydown','scroll','mousemove'].forEach(e =>
+    document.addEventListener(e, resetInactivityTimer, { passive: true })
+  );
+  resetInactivityTimer();
+}
+function stopInactivityWatch() {
+  clearTimeout(inactivityTimer);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   var tb = document.getElementById('tabRegister');
   if (tb) tb.addEventListener('click', function() { switchAuth('register'); });
