@@ -652,6 +652,12 @@ body::before {
       <button class="btn btn-green" style="margin-bottom:18px;" onclick="saveContact()">SAVE & UNLOCK WALLET</button>
     </div>
     <div class="sec-title" style="font-size:13px;margin-bottom:10px;">Bank Details</div>
+    <!-- Demo block for bank details -->
+    <div id="demoBankBlock" style="display:none;background:var(--gold2);border:1.5px solid rgba(240,165,0,.35);border-radius:14px;padding:18px;text-align:center;margin-bottom:18px;">
+      <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--navy);letter-spacing:1px;margin-bottom:6px;">Demo Restriction</div>
+      <div style="font-size:13px;color:#7a5000;line-height:1.6;">Demo accounts cannot save bank details.<br><strong>Register a real account</strong> to add your bank.</div>
+    </div>
     <div id="bankForm">
       <div class="field"><label>Account Holder Name</label><input id="bkHolder" placeholder="Name as per bank account"></div>
       <div class="field"><label>Bank Name</label><input id="bkBank" placeholder="e.g. HDFC Bank"></div>
@@ -924,6 +930,7 @@ function renderUserHeader() {
     ? '<span class="chip cgo">Demo</span>'
     : (u.blocked ? '<span class="chip cr">Blocked</span>' : '<span class="chip cg">Active</span>');
   if (!IS_DEMO) {
+    document.getElementById('demoBankBlock').style.display = 'none';
     const needsContact = !u.email || !u.mobile;
     document.getElementById('verifyBanner').style.display = needsContact ? 'flex' : 'none';
     document.getElementById('contactForm').style.display  = needsContact ? 'block' : 'none';
@@ -939,6 +946,13 @@ function renderUserHeader() {
       document.getElementById('bankForm').style.display    = 'block';
       document.getElementById('bankDisplay').style.display = 'none';
     }
+  } else {
+    // Demo: hide bank form, show lock block
+    document.getElementById('demoBankBlock').style.display = 'block';
+    document.getElementById('bankForm').style.display      = 'none';
+    document.getElementById('bankDisplay').style.display   = 'none';
+    document.getElementById('verifyBanner').style.display  = 'none';
+    document.getElementById('contactForm').style.display   = 'none';
   }
 }
 
@@ -1275,6 +1289,7 @@ async function saveContact() {
 }
 
 async function saveBankDetails() {
+  if (IS_DEMO) { toast('Demo accounts cannot save bank details', 'r'); return; }
   const holder = document.getElementById('bkHolder').value.trim();
   const bank   = document.getElementById('bkBank').value.trim();
   const acc    = document.getElementById('bkAcc').value.trim();
