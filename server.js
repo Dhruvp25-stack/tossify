@@ -554,7 +554,85 @@ app.post('/api/admin/withdrawal/:action', adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ── SETTLE MATCH — settle ALL bets for a match at once ────────
+// ── AUTO-SETTLE: fetch unsettled matches (for telegram settler) ─
+app.get('/api/auto-settle/matches', (req, res) => {
+  const secret = req.headers['x-scraper-key'];
+  const validSecret = process.env.SCRAPER_SECRET || 'my_new_scraper';
+  if (secret !== validSecret) return res.status(403).json({ ok: false });
+
+  // Return all unsettled matches (betting open or closed, not yet settled)
+  const all = getLiveMatchesAdmin();
+  const unsettled = all.filter(m => !DB.settledMatches[m.id]);
+  res.json({ ok: true, matches: unsettled });
+});
+
+// ── AUTO-SETTLE: settle a match from telegram result ────────────
+app.post('/api/auto-settle', (req, res) => {
+  const secret = req.headers['x-scraper-key'];
+  const validSecret = process.env.SCRAPER_SECRET || 'my_new_scraper';
+  if (secret !== validSecret) return res.status(403).json({ ok: false, msg: 'Unauthorized' });
+
+  const { matchId, winnerTeam, winnerRaw } = req.body;
+  if (!matchId || !winnerTeam) return res.json({ ok: false, msg: 'matchId and winnerTeam required' });
+
+  // Don't double-settle
+  if (DB.settledMatches[matchId]) {
+    return res.json({ ok: false, msg: 'Match already settled' });
+  }
+
+  // Mark settled
+  DB.settledMatches[matchId] = {
+    action:     'settle',
+    winnerTeam,
+    winnerRaw:  winnerRaw || winnerTeam,
+    settledAt:  new Date().toLocaleString('en-IN'),
+    autoSettled: true
+  };
+
+  // Mark admin match inactive if exists
+  const adminMatch = (DB.adminMatches || []).find(m => m.id === matchId);
+  if (adminMatch) adminMatch.active = false;
+
+  // Settle all pending bets
+  const matchBets = DB.bets.filter(b => b.matchId === matchId && b.status === 'Pending');
+  let settled = 0;
+
+  for (const bet of matchBets) {
+    const result = bet.team === winnerTeam ? 'Won' : 'Lost';
+    bet.status = result;
+    const u = findUser(bet.userId);
+    if (u) {
+      const ub = u.bets.find(b => b.id === bet.id);
+      if (ub) ub.status = result;
+      if (result === 'Won') u.balance += bet.potential;
+      saveDB();
+      io.to(bet.userId).emit('balance:update', { balance: u.balance });
+      io.to(bet.userId).emit('bets:settled', {
+        betId: bet.id, result, balance: u.balance, match: bet.match
+      });
+    }
+    settled++;
+  }
+
+  saveDB();
+
+  // Broadcast to all — users and admin
+  io.emit('matches:update',       { matches: getLiveMatches() });
+  io.emit('matches:admin:update', { matches: getLiveMatchesAdmin() });
+  io.to('admin').emit('db:bets', DB.bets);
+  io.emit('match:result', {
+    matchId, action: 'settle',
+    match:       matchBets[0]?.match || matchId,
+    winnerTeam,
+    settledCount: settled,
+    autoSettled:  true
+  });
+
+  console.log(`[AUTO-SETTLE] Match ${matchId} settled → ${winnerTeam} (${settled} bets) via Telegram`);
+  res.json({ ok: true, settled });
+});
+
+
 // result: { action: 'settle', winnerTeam: 'TeamA name' } or { action: 'cancel' }
 app.post('/api/admin/match/settle', adminAuth, (req, res) => {
   const { matchId, action, winnerTeam } = req.body;
